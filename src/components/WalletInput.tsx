@@ -3,6 +3,7 @@ import { isValidEthereumAddress } from '@/services/relayApi';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Copy, ExternalLink } from 'lucide-react';
 
 interface WalletInputProps {
   onAnalyze: (address: string) => void;
@@ -14,6 +15,7 @@ interface WalletInputProps {
 export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAddress }: WalletInputProps) {
   const [address, setAddress] = useState('');
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,15 +37,43 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
   const handleReset = () => {
     setAddress('');
     setError('');
+    setCopied(false);
     onReset();
+  };
+
+  const handleCopy = async () => {
+    if (analyzedAddress) {
+      try {
+        await navigator.clipboard.writeText(analyzedAddress);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  };
+
+  const handleExternalLink = () => {
+    if (analyzedAddress) {
+      window.open(`https://relay.link/transactions?address=${analyzedAddress}`, '_blank', 'noopener,noreferrer');
+    }
   };
 
   // Show analyzed address view after successful analysis
   if (analyzedAddress && !isLoading) {
     return (
       <Card className="w-full mx-auto">
-        <CardHeader className="space-y-1 sm:space-y-2">
-          <CardTitle className="text-lg sm:text-xl md:text-2xl">Analyzed Wallet</CardTitle>
+        <CardHeader className="space-y-1 sm:space-y-2 relative">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleExternalLink}
+            className="absolute top-4 right-4 h-8 w-8 sm:h-9 sm:w-9"
+            title="View on Relay"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+          <CardTitle className="text-lg sm:text-xl md:text-2xl pr-12">Analyzed Wallet</CardTitle>
           <CardDescription className="text-sm sm:text-base">Relay Protocol transaction statistics</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -51,9 +81,20 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
             <label className="text-xs sm:text-sm font-medium text-muted-foreground">
               Wallet Address
             </label>
-            <p className="font-mono text-xs sm:text-sm bg-muted p-2 sm:p-3 rounded-md break-all">
-              {analyzedAddress}
-            </p>
+            <div className="flex gap-2">
+              <p className="font-mono text-xs sm:text-sm bg-muted p-2 sm:p-3 rounded-md break-all flex-1">
+                {analyzedAddress}
+              </p>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleCopy}
+                className="h-auto w-10 sm:w-11 flex-shrink-0"
+                title={copied ? 'Copied!' : 'Copy address'}
+              >
+                <Copy className={`h-4 w-4 ${copied ? 'text-primary' : ''}`} />
+              </Button>
+            </div>
           </div>
           <Button
             onClick={handleReset}

@@ -3,7 +3,7 @@ import { isValidEthereumAddress } from '@/services/relayApi';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Copy, ExternalLink } from 'lucide-react';
+import { Copy, ExternalLink, Check } from 'lucide-react';
 
 interface WalletInputProps {
   onAnalyze: (address: string) => void;
@@ -89,10 +89,14 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
                 variant="outline"
                 size="icon"
                 onClick={handleCopy}
-                className="h-auto w-10 sm:w-11 flex-shrink-0"
+                className={`h-auto w-10 sm:w-11 flex-shrink-0 transition-colors ${copied ? 'border-green-500 bg-green-50' : ''}`}
                 title={copied ? 'Copied!' : 'Copy address'}
               >
-                <Copy className={`h-4 w-4 ${copied ? 'text-primary' : ''}`} />
+                {copied ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>

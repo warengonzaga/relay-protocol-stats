@@ -36,6 +36,12 @@ function App() {
     setAnalyzedAddress(null);
   };
 
+  const handleRefresh = () => {
+    if (analyzedAddress) {
+      handleAnalyze(analyzedAddress);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8 flex flex-col">
       <div className="max-w-4xl mx-auto flex-1 w-full">
@@ -57,7 +63,7 @@ function App() {
 
         {isLoading && <LoadingSpinner />}
 
-        {!isLoading && <StatsDisplay stats={stats} error={error} />}
+        {!isLoading && <StatsDisplay stats={stats} error={error} onRefresh={handleRefresh} isRefreshing={isLoading} />}
       </div>
 
       <Footer />

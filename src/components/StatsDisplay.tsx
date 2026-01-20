@@ -1,13 +1,16 @@
 import type { WalletStats } from '@/types/relay';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 interface StatsDisplayProps {
   stats: WalletStats | null;
   error: string | null;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
-export default function StatsDisplay({ stats, error }: StatsDisplayProps) {
+export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = false }: StatsDisplayProps) {
   if (error) {
     return (
       <Card className="w-full mx-auto mt-6 sm:mt-8 border-destructive">
@@ -32,8 +35,24 @@ export default function StatsDisplay({ stats, error }: StatsDisplayProps) {
     <div className="w-full mx-auto mt-6 sm:mt-8 space-y-4">
       <Card>
         <CardHeader className="space-y-1 sm:space-y-2">
-          <CardTitle className="text-lg sm:text-xl md:text-2xl">Wallet Address Statistics</CardTitle>
-          <CardDescription className="text-sm sm:text-base">Relay Protocol transaction history for this address</CardDescription>
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <CardTitle className="text-lg sm:text-xl md:text-2xl">Wallet Address Statistics</CardTitle>
+              <CardDescription className="text-sm sm:text-base mt-1 sm:mt-2">Relay Protocol transaction history for this address</CardDescription>
+            </div>
+            {onRefresh && (
+              <Button
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                variant="outline"
+                size="icon"
+                className="ml-2 flex-shrink-0"
+                aria-label="Refresh statistics"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4 sm:space-y-6">
           <div className="space-y-1 sm:space-y-2">

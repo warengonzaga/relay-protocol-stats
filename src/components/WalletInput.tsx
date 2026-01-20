@@ -41,23 +41,23 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
   // Show analyzed address view after successful analysis
   if (analyzedAddress && !isLoading) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle>Analyzed Wallet</CardTitle>
-          <CardDescription>Relay Protocol transaction statistics</CardDescription>
+      <Card className="w-full mx-auto">
+        <CardHeader className="space-y-1 sm:space-y-2">
+          <CardTitle className="text-lg sm:text-xl md:text-2xl">Analyzed Wallet</CardTitle>
+          <CardDescription className="text-sm sm:text-base">Relay Protocol transaction statistics</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">
+            <label className="text-xs sm:text-sm font-medium text-muted-foreground">
               Wallet Address
             </label>
-            <p className="font-mono text-sm bg-muted p-3 rounded-md break-all">
+            <p className="font-mono text-xs sm:text-sm bg-muted p-2 sm:p-3 rounded-md break-all">
               {analyzedAddress}
             </p>
           </div>
           <Button
             onClick={handleReset}
-            className="w-full"
+            className="w-full text-sm sm:text-base"
           >
             Analyze Another Wallet Address
           </Button>
@@ -68,15 +68,15 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
 
   // Show input form
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Analyze Wallet</CardTitle>
-        <CardDescription>Enter any wallet address to view Relay Protocol transaction statistics</CardDescription>
+    <Card className="w-full mx-auto">
+      <CardHeader className="space-y-1 sm:space-y-2">
+        <CardTitle className="text-lg sm:text-xl md:text-2xl">Analyze Wallet</CardTitle>
+        <CardDescription className="text-sm sm:text-base">Enter any wallet address to view Relay Protocol transaction statistics</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="wallet-address" className="text-sm font-medium">
+            <label htmlFor="wallet-address" className="text-xs sm:text-sm font-medium">
               Wallet Address
             </label>
             <Input
@@ -86,16 +86,16 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Enter wallet address (Ethereum, Solana, etc.)"
               disabled={isLoading}
-              className="font-mono"
+              className="font-mono text-xs sm:text-sm"
             />
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <p className="text-xs sm:text-sm text-destructive">{error}</p>
             )}
           </div>
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full"
+            className="w-full text-sm sm:text-base"
           >
             {isLoading ? 'Analyzing...' : 'Analyze'}
           </Button>

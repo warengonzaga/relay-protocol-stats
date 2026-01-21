@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import WalletInput from '@/components/WalletInput';
 import StatsDisplay from '@/components/StatsDisplay';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -13,6 +13,7 @@ function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analyzedAddress, setAnalyzedAddress] = useState<string | null>(null);
+  const currentRequestIdRef = useRef(0);
 
   const handleAnalyze = async (address: string) => {
     setIsLoading(true);
@@ -38,16 +39,32 @@ function App() {
   };
 
   const handleRefresh = async () => {
-    if (analyzedAddress) {
-      setIsRefreshing(true);
-      setError(null);
+    if (!analyzedAddress || isRefreshing) {
+      return;
+    }
 
-      try {
-        const walletStats = await analyzeWalletStats(analyzedAddress);
+    setIsRefreshing(true);
+    setError(null);
+
+    // Increment request ID and capture it for this request
+    currentRequestIdRef.current += 1;
+    const requestId = currentRequestIdRef.current;
+
+    try {
+      const walletStats = await analyzeWalletStats(analyzedAddress);
+
+      // Only update if this is still the latest request
+      if (requestId === currentRequestIdRef.current) {
         setStats(walletStats);
-      } catch (err) {
+      }
+    } catch (err) {
+      // Only update error if this is still the latest request
+      if (requestId === currentRequestIdRef.current) {
         setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-      } finally {
+      }
+    } finally {
+      // Only clear refreshing state if this is still the latest request
+      if (requestId === currentRequestIdRef.current) {
         setIsRefreshing(false);
       }
     }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import WalletInput from '@/components/WalletInput';
 import StatsDisplay from '@/components/StatsDisplay';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -10,8 +10,10 @@ import type { WalletStats } from '@/types/relay';
 function App() {
   const [stats, setStats] = useState<WalletStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analyzedAddress, setAnalyzedAddress] = useState<string | null>(null);
+  const currentRequestIdRef = useRef(0);
 
   const handleAnalyze = async (address: string) => {
     setIsLoading(true);
@@ -36,6 +38,38 @@ function App() {
     setAnalyzedAddress(null);
   };
 
+  const handleRefresh = async () => {
+    if (!analyzedAddress || isRefreshing) {
+      return;
+    }
+
+    setIsRefreshing(true);
+    setError(null);
+
+    // Increment request ID and capture it for this request
+    currentRequestIdRef.current += 1;
+    const requestId = currentRequestIdRef.current;
+
+    try {
+      const walletStats = await analyzeWalletStats(analyzedAddress);
+
+      // Only update if this is still the latest request
+      if (requestId === currentRequestIdRef.current) {
+        setStats(walletStats);
+      }
+    } catch (err) {
+      // Only update error if this is still the latest request
+      if (requestId === currentRequestIdRef.current) {
+        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      }
+    } finally {
+      // Only clear refreshing state if this is still the latest request
+      if (requestId === currentRequestIdRef.current) {
+        setIsRefreshing(false);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8 flex flex-col">
       <div className="max-w-4xl mx-auto flex-1 w-full">
@@ -57,7 +91,7 @@ function App() {
 
         {isLoading && <LoadingSpinner />}
 
-        {!isLoading && <StatsDisplay stats={stats} error={error} />}
+        {!isLoading && <StatsDisplay stats={stats} error={error} onRefresh={handleRefresh} isRefreshing={isRefreshing} />}
       </div>
 
       <Footer />

@@ -10,6 +10,7 @@ import type { WalletStats } from '@/types/relay';
 function App() {
   const [stats, setStats] = useState<WalletStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analyzedAddress, setAnalyzedAddress] = useState<string | null>(null);
 
@@ -36,9 +37,19 @@ function App() {
     setAnalyzedAddress(null);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     if (analyzedAddress) {
-      handleAnalyze(analyzedAddress);
+      setIsRefreshing(true);
+      setError(null);
+
+      try {
+        const walletStats = await analyzeWalletStats(analyzedAddress);
+        setStats(walletStats);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      } finally {
+        setIsRefreshing(false);
+      }
     }
   };
 
@@ -63,7 +74,7 @@ function App() {
 
         {isLoading && <LoadingSpinner />}
 
-        {!isLoading && <StatsDisplay stats={stats} error={error} onRefresh={handleRefresh} isRefreshing={isLoading} />}
+        {!isLoading && <StatsDisplay stats={stats} error={error} onRefresh={handleRefresh} isRefreshing={isRefreshing} />}
       </div>
 
       <Footer />

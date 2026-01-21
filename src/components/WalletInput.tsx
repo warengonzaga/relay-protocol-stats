@@ -3,7 +3,7 @@ import { isValidEthereumAddress } from '@/services/relayApi';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Copy, ExternalLink, Check } from 'lucide-react';
+import { Copy, ExternalLink, Check, Share2 } from 'lucide-react';
 
 interface WalletInputProps {
   onAnalyze: (address: string) => void;
@@ -16,6 +16,7 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
   const [address, setAddress] = useState('');
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +39,7 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
     setAddress('');
     setError('');
     setCopied(false);
+    setShared(false);
     onReset();
   };
 
@@ -56,6 +58,19 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
   const handleExternalLink = () => {
     if (analyzedAddress) {
       window.open(`https://relay.link/transactions?address=${analyzedAddress}`, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleShare = async () => {
+    if (analyzedAddress) {
+      try {
+        const shareUrl = `${window.location.origin}${window.location.pathname}?wallet=${analyzedAddress}`;
+        await navigator.clipboard.writeText(shareUrl);
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy URL:', err);
+      }
     }
   };
 
@@ -96,6 +111,19 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
                   <Check className="h-4 w-4 text-green-600" />
                 ) : (
                   <Copy className="h-4 w-4" />
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleShare}
+                className={`h-auto w-10 sm:w-11 flex-shrink-0 transition-colors ${shared ? 'border-green-500 bg-green-50' : ''}`}
+                title={shared ? 'URL Copied!' : 'Share wallet URL'}
+              >
+                {shared ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Share2 className="h-4 w-4" />
                 )}
               </Button>
             </div>

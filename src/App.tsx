@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import WalletInput from '@/components/WalletInput';
 import StatsDisplay from '@/components/StatsDisplay';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import RelayLogo from '@/components/RelayLogo';
 import Footer from '@/components/Footer';
-import { analyzeWalletStats } from '@/services/relayApi';
+import { analyzeWalletStats, isValidEthereumAddress } from '@/services/relayApi';
 import type { WalletStats } from '@/types/relay';
 
 function App() {
@@ -15,6 +15,16 @@ function App() {
   const [analyzedAddress, setAnalyzedAddress] = useState<string | null>(null);
   const currentRequestIdRef = useRef(0);
 
+  // Read wallet address from URL parameter on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const walletParam = urlParams.get('wallet');
+
+    if (walletParam && isValidEthereumAddress(walletParam)) {
+      handleAnalyze(walletParam);
+    }
+  }, []);
+
   const handleAnalyze = async (address: string) => {
     setIsLoading(true);
     setError(null);
@@ -24,6 +34,11 @@ function App() {
       const walletStats = await analyzeWalletStats(address);
       setStats(walletStats);
       setAnalyzedAddress(address);
+
+      // Update URL with wallet parameter
+      const url = new URL(window.location.href);
+      url.searchParams.set('wallet', address);
+      window.history.pushState({}, '', url.toString());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       setAnalyzedAddress(null);
@@ -36,6 +51,11 @@ function App() {
     setStats(null);
     setError(null);
     setAnalyzedAddress(null);
+
+    // Clear wallet parameter from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('wallet');
+    window.history.pushState({}, '', url.toString());
   };
 
   const handleRefresh = async () => {

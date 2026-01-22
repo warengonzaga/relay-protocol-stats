@@ -77,65 +77,83 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
   // Show analyzed address view after successful analysis
   if (analyzedAddress && !isLoading) {
     return (
-      <Card className="w-full mx-auto">
-        <CardHeader className="space-y-1 sm:space-y-2 relative">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleExternalLink}
-            className="absolute top-4 right-4 h-8 w-8 sm:h-9 sm:w-9"
-            title="View on Relay"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-          <CardTitle className="text-lg sm:text-xl md:text-2xl pr-12">Analyzed Wallet</CardTitle>
-          <CardDescription className="text-sm sm:text-base">Relay Protocol transaction statistics</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-medium text-muted-foreground">
-              Wallet Address
-            </label>
-            <div className="flex gap-2">
-              <p className="font-mono text-xs sm:text-sm bg-muted p-2 sm:p-3 rounded-md break-all flex-1">
+      <div className="w-full mx-auto mb-6">
+        {/* Profile Header */}
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border rounded-lg p-4 sm:p-6 mb-4">
+          <div className="flex items-start gap-3 sm:gap-4 mb-4">
+            {/* Avatar */}
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center flex-shrink-0">
+              <span className="text-lg sm:text-2xl font-bold text-primary-foreground">
+                {analyzedAddress.slice(2, 4).toUpperCase()}
+              </span>
+            </div>
+
+            {/* Wallet Info */}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base sm:text-lg font-semibold mb-1">Wallet Profile</h2>
+              <div className="font-mono text-xs sm:text-sm text-muted-foreground break-all">
                 {analyzedAddress}
-              </p>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleCopy}
-                className={`h-auto w-10 sm:w-11 flex-shrink-0 transition-colors ${copied ? 'border-green-500 bg-green-50' : ''}`}
-                title={copied ? 'Copied!' : 'Copy address'}
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleShare}
-                className={`h-auto w-10 sm:w-11 flex-shrink-0 transition-colors ${shared ? 'border-green-500 bg-green-50' : ''}`}
-                title={shared ? 'URL Copied!' : 'Share wallet URL'}
-              >
-                {shared ? (
-                  <Check className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Share2 className="h-4 w-4" />
-                )}
-              </Button>
+              </div>
             </div>
           </div>
-          <Button
-            onClick={handleReset}
-            className="w-full text-sm sm:text-base"
-          >
-            Analyze Another Wallet Address
-          </Button>
-        </CardContent>
-      </Card>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopy}
+              className={`transition-colors ${copied ? 'border-green-500 bg-green-50' : ''}`}
+            >
+              {copied ? (
+                <>
+                  <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 text-green-600" />
+                  <span className="text-xs sm:text-sm">Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5" />
+                  <span className="text-xs sm:text-sm">Copy</span>
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShare}
+              className={`transition-colors ${shared ? 'border-green-500 bg-green-50' : ''}`}
+            >
+              {shared ? (
+                <>
+                  <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 text-green-600" />
+                  <span className="text-xs sm:text-sm">Link Copied</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5" />
+                  <span className="text-xs sm:text-sm">Share</span>
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExternalLink}
+            >
+              <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5" />
+              <span className="text-xs sm:text-sm">View on Relay</span>
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleReset}
+              className="ml-auto"
+            >
+              <span className="text-xs sm:text-sm">Analyze Another</span>
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 

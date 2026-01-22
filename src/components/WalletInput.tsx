@@ -105,6 +105,29 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
     setIsAddressVisible(!isAddressVisible);
   };
 
+  // Show compact loading view while analyzing - hide entire input form
+  if (isLoading) {
+    return (
+      <div className="w-full mx-auto mb-6">
+        {/* Compact Loading Header with scale-in animation */}
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border rounded-lg p-4 sm:p-6 animate-in zoom-in-95 fade-in duration-300">
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* Avatar Skeleton */}
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex-shrink-0 bg-muted animate-pulse">
+              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5" />
+            </div>
+
+            {/* Wallet Info Skeleton */}
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="h-4 sm:h-5 bg-muted rounded animate-pulse w-48 max-w-full" />
+              <div className="h-3 sm:h-4 bg-muted/50 rounded animate-pulse w-64 max-w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Show analyzed address view after successful analysis
   if (analyzedAddress && !isLoading) {
     // Determine if address is Solana (not starting with 0x)

@@ -15,6 +15,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [analyzedAddress, setAnalyzedAddress] = useState<string | null>(null);
   const [ensName, setEnsName] = useState<string | null>(null);
+  const [loadingAddress, setLoadingAddress] = useState<string>('');
   const currentRequestIdRef = useRef(0);
 
   // Read wallet address from URL parameter on mount
@@ -29,6 +30,7 @@ function App() {
 
   const handleAnalyze = async (address: string) => {
     setIsLoading(true);
+    setLoadingAddress(address);
     setError(null);
     setStats(null);
     setEnsName(null);
@@ -54,6 +56,7 @@ function App() {
       setEnsName(null);
     } finally {
       setIsLoading(false);
+      setLoadingAddress('');
     }
   };
 
@@ -62,6 +65,7 @@ function App() {
     setError(null);
     setAnalyzedAddress(null);
     setEnsName(null);
+    setLoadingAddress('');
 
     // Clear wallet parameter from URL
     const url = new URL(window.location.href);
@@ -121,7 +125,7 @@ function App() {
           ensName={ensName}
         />
 
-        {isLoading && <LoadingSpinner />}
+        {isLoading && <LoadingSpinner address={loadingAddress} />}
 
         {!isLoading && <StatsDisplay stats={stats} error={error} onRefresh={handleRefresh} isRefreshing={isRefreshing} />}
       </div>

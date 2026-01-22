@@ -5,6 +5,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import RelayLogo from '@/components/RelayLogo';
 import Footer from '@/components/Footer';
 import { analyzeWalletStats, isValidEthereumAddress } from '@/services/relayApi';
+import { resolveENS } from '@/services/ens';
 import type { WalletStats } from '@/types/relay';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analyzedAddress, setAnalyzedAddress] = useState<string | null>(null);
+  const [ensName, setEnsName] = useState<string | null>(null);
   const currentRequestIdRef = useRef(0);
 
   // Read wallet address from URL parameter on mount
@@ -29,11 +31,18 @@ function App() {
     setIsLoading(true);
     setError(null);
     setStats(null);
+    setEnsName(null);
 
     try {
-      const walletStats = await analyzeWalletStats(address);
+      // Resolve ENS name in parallel with wallet stats
+      const [walletStats, resolvedEns] = await Promise.all([
+        analyzeWalletStats(address),
+        resolveENS(address),
+      ]);
+
       setStats(walletStats);
       setAnalyzedAddress(address);
+      setEnsName(resolvedEns);
 
       // Update URL with wallet parameter
       const url = new URL(window.location.href);
@@ -42,6 +51,7 @@ function App() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       setAnalyzedAddress(null);
+      setEnsName(null);
     } finally {
       setIsLoading(false);
     }
@@ -51,6 +61,7 @@ function App() {
     setStats(null);
     setError(null);
     setAnalyzedAddress(null);
+    setEnsName(null);
 
     // Clear wallet parameter from URL
     const url = new URL(window.location.href);
@@ -107,6 +118,7 @@ function App() {
           onReset={handleReset}
           isLoading={isLoading}
           analyzedAddress={analyzedAddress}
+          ensName={ensName}
         />
 
         {isLoading && <LoadingSpinner />}

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { isValidEthereumAddress } from '@/services/relayApi';
+import { resolveENSToAddress } from '@/services/ens';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Copy, ExternalLink, Check, Share2, Eye, EyeOff } from 'lucide-react';
+import { Copy, ExternalLink, Check, Share2, Eye, EyeOff, Sparkles } from 'lucide-react';
 import Avatar from 'boring-avatars';
 
 interface WalletInputProps {
@@ -11,30 +12,49 @@ interface WalletInputProps {
   onReset: () => void;
   isLoading: boolean;
   analyzedAddress: string | null;
+  ensName: string | null;
 }
 
-export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAddress }: WalletInputProps) {
+export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAddress, ensName }: WalletInputProps) {
   const [address, setAddress] = useState('');
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
   const [isAddressVisible, setIsAddressVisible] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!address.trim()) {
-      setError('Please enter a wallet address');
+      setError('Please enter a wallet address or ENS name');
       return;
     }
 
-    if (!isValidEthereumAddress(address.trim())) {
-      setError('Invalid wallet address format. Please enter a valid Ethereum (0x...) or Solana address.');
+    const trimmedAddress = address.trim();
+
+    // Check if it's an ENS name (.eth)
+    if (trimmedAddress.endsWith('.eth')) {
+      try {
+        const resolvedAddress = await resolveENSToAddress(trimmedAddress);
+        if (resolvedAddress) {
+          onAnalyze(resolvedAddress);
+        } else {
+          setError('Unable to resolve ENS name. Please check the name and try again.');
+        }
+      } catch (err) {
+        setError('Failed to resolve ENS name. Please try again.');
+      }
       return;
     }
 
-    onAnalyze(address.trim());
+    // Validate as regular address
+    if (!isValidEthereumAddress(trimmedAddress)) {
+      setError('Invalid format. Please enter a valid wallet address or ENS name (.eth)');
+      return;
+    }
+
+    onAnalyze(trimmedAddress);
   };
 
   const handleReset = () => {
@@ -87,6 +107,18 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
 
   // Show analyzed address view after successful analysis
   if (analyzedAddress && !isLoading) {
+    // Determine if address is Solana (not starting with 0x)
+    const isSolana = !analyzedAddress.startsWith('0x');
+
+    // Determine the profile title
+    let profileTitle = 'Wallet Address Profile';
+    if (ensName) {
+      profileTitle = ensName;
+    } else if (!isSolana) {
+      // For Ethereum addresses without ENS, show "Wallet Address Profile"
+      profileTitle = 'Wallet Address Profile';
+    }
+
     return (
       <div className="w-full mx-auto mb-6">
         {/* Profile Header */}
@@ -104,7 +136,7 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
 
             {/* Wallet Info */}
             <div className="flex-1 min-w-0">
-              <h2 className="text-base sm:text-lg font-semibold mb-1">Wallet Profile</h2>
+              <h2 className="text-base sm:text-lg font-semibold mb-1">{profileTitle}</h2>
               <div className="flex items-center gap-2">
                 <a
                   href={`https://blockscan.com/address/${analyzedAddress}?utm_source=relay-protocol-stats&utm_medium=web&utm_campaign=wallet-analysis`}
@@ -191,37 +223,66 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
 
   // Show input form
   return (
-    <Card className="w-full mx-auto">
-      <CardHeader className="space-y-1 sm:space-y-2">
-        <CardTitle className="text-lg sm:text-xl md:text-2xl">Analyze Wallet</CardTitle>
-        <CardDescription className="text-sm sm:text-base">Enter any wallet address to view Relay Protocol transaction statistics</CardDescription>
+    <Card className="w-full mx-auto border-none shadow-xl bg-gradient-to-br from-card via-card to-primary/5">
+      <CardHeader className="space-y-3 sm:space-y-4 pb-4 sm:pb-6">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+          </div>
+          <CardTitle className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Analyze Wallet
+          </CardTitle>
+        </div>
+        <CardDescription className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+          Discover your cross-chain journey with Relay Protocol. Enter any wallet address or ENS name to unlock detailed transaction insights.
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
           <div className="space-y-2">
-            <label htmlFor="wallet-address" className="text-xs sm:text-sm font-medium">
-              Wallet Address
+            <label htmlFor="wallet-address" className="text-xs sm:text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              Wallet Address or ENS Name
+              <span className="text-xs font-normal text-muted-foreground">(.eth supported)</span>
             </label>
-            <Input
-              id="wallet-address"
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Enter wallet address (Ethereum, Solana, etc.)"
-              disabled={isLoading}
-              className="font-mono text-xs sm:text-sm"
-            />
+            <div className="relative">
+              <Input
+                id="wallet-address"
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="vitalik.eth or 0x..."
+                disabled={isLoading}
+                className="font-mono text-xs sm:text-sm h-11 sm:h-12 bg-background/50 border-2 focus:border-primary transition-colors pr-12"
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40">
+                <Sparkles className="h-4 w-4" />
+              </div>
+            </div>
             {error && (
-              <p className="text-xs sm:text-sm text-destructive">{error}</p>
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <p className="text-xs sm:text-sm text-destructive leading-relaxed">{error}</p>
+              </div>
             )}
           </div>
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full text-sm sm:text-base"
-          >
-            {isLoading ? 'Analyzing...' : 'Analyze'}
-          </Button>
+          {address.trim() && (
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full text-sm sm:text-base h-11 sm:h-12 font-semibold shadow-lg hover:shadow-xl transition-all animate-in fade-in slide-in-from-bottom-2 duration-200"
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  Analyzing...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Analyze Transaction History
+                </span>
+              )}
+            </Button>
+          )}
         </form>
       </CardContent>
     </Card>

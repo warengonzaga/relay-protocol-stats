@@ -6,10 +6,13 @@ A web-based dashboard for analyzing Relay Protocol cross-chain transaction histo
 
 - **Transaction Count**: View total number of successful cross-chain transactions
 - **Total Volume**: See the total USD value of tokens transferred
+- **Success Rate Analytics**: Track transaction success rate with failure metrics
 - **Top Chains Analytics**: See your most used chains:
   - Favorite Chain (overall most used)
   - Top Origin Chain (most common source chain)
   - Top Destination Chain (most common target chain)
+- **Wallet Privacy**: Address truncation by default with toggle to show/hide full address
+- **Blockscan Integration**: Clickable wallet address linking to Blockscan with UTM tracking
 - **Shareable URLs**: Share wallet analysis with direct URL links
 - **Fast & Simple**: Just paste your wallet address - no wallet connection required
 - **Automatic Pagination**: Fetches all transaction history automatically

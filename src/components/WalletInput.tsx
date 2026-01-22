@@ -3,7 +3,7 @@ import { isValidEthereumAddress } from '@/services/relayApi';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Copy, ExternalLink, Check, Share2 } from 'lucide-react';
+import { Copy, ExternalLink, Check, Share2, Eye, EyeOff } from 'lucide-react';
 
 interface WalletInputProps {
   onAnalyze: (address: string) => void;
@@ -17,6 +17,7 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
+  const [isAddressVisible, setIsAddressVisible] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +75,15 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
     }
   };
 
+  const truncateAddress = (addr: string) => {
+    if (addr.length <= 10) return addr;
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  const toggleAddressVisibility = () => {
+    setIsAddressVisible(!isAddressVisible);
+  };
+
   // Show analyzed address view after successful analysis
   if (analyzedAddress && !isLoading) {
     return (
@@ -91,8 +101,26 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
             {/* Wallet Info */}
             <div className="flex-1 min-w-0">
               <h2 className="text-base sm:text-lg font-semibold mb-1">Wallet Profile</h2>
-              <div className="font-mono text-xs sm:text-sm text-muted-foreground break-all">
-                {analyzedAddress}
+              <div className="flex items-center gap-2">
+                <a
+                  href={`https://blockscan.com/address/${analyzedAddress}?utm_source=relay-protocol-stats&utm_medium=web&utm_campaign=wallet-analysis`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors break-all underline decoration-dotted underline-offset-2"
+                >
+                  {isAddressVisible ? analyzedAddress : truncateAddress(analyzedAddress)}
+                </a>
+                <button
+                  onClick={toggleAddressVisibility}
+                  className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={isAddressVisible ? 'Hide address' : 'Show address'}
+                >
+                  {isAddressVisible ? (
+                    <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
+                  ) : (
+                    <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                  )}
+                </button>
               </div>
             </div>
           </div>

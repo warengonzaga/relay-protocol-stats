@@ -1,8 +1,9 @@
 import axios from 'axios';
-import type { RelayResponse, RelayRequest, WalletStats } from '../types/relay';
+import type { RelayResponse, RelayRequest, WalletStats, Chain, ChainStats } from '../types/relay';
 
 const BASE_URL = 'https://api.relay.link';
 const REQUESTS_ENDPOINT = '/requests/v2';
+const CHAINS_ENDPOINT = '/chains';
 
 /**
  * Fetch all requests for a user address with automatic pagination
@@ -72,10 +73,76 @@ function calculateVolumeUsd(request: RelayRequest): number {
 }
 
 /**
+ * Fetch all chains from Relay API
+ */
+export async function fetchChains(): Promise<Chain[]> {
+  try {
+    const response = await axios.get(`${BASE_URL}${CHAINS_ENDPOINT}`);
+    const data = response.data;
+
+    // The API returns {chains: [...]} structure
+    if (data && data.chains && Array.isArray(data.chains)) {
+      return data.chains as Chain[];
+    }
+
+    return [];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(`Failed to fetch chains: ${error.response?.data?.message || error.message}`);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Calculate top chains statistics
+ */
+function calculateTopChains(
+  requests: RelayRequest[],
+  chains: Chain[],
+  type: 'all' | 'origin' | 'destination'
+): ChainStats[] {
+  const chainCounts = new Map<number, number>();
+
+  requests.forEach(request => {
+    if (type === 'all' || type === 'origin') {
+      request.data.inTxs.forEach(tx => {
+        chainCounts.set(tx.chainId, (chainCounts.get(tx.chainId) || 0) + 1);
+      });
+    }
+    if (type === 'all' || type === 'destination') {
+      request.data.outTxs.forEach(tx => {
+        chainCounts.set(tx.chainId, (chainCounts.get(tx.chainId) || 0) + 1);
+      });
+    }
+  });
+
+  // Convert to array and sort by count
+  const chainStats: ChainStats[] = Array.from(chainCounts.entries())
+    .map(([chainId, count]) => {
+      // Find chain by matching the id property (which is the chainId)
+      const chain = chains.find(c => c.id === chainId);
+      return {
+        chainId,
+        chainName: chain?.displayName || chain?.name || `Chain ${chainId}`,
+        iconUrl: chain?.iconUrl || chain?.logoUrl,
+        count,
+      };
+    })
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5); // Top 5 chains
+
+  return chainStats;
+}
+
+/**
  * Analyze wallet statistics
  */
 export async function analyzeWalletStats(userAddress: string): Promise<WalletStats> {
-  const allRequests = await fetchAllUserRequests(userAddress);
+  const [allRequests, chains] = await Promise.all([
+    fetchAllUserRequests(userAddress),
+    fetchChains(),
+  ]);
 
   // Filter only successful transactions
   const successfulRequests = allRequests.filter(req => req.status === 'success');
@@ -88,9 +155,17 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
     return total + calculateVolumeUsd(request);
   }, 0);
 
+  // Calculate top chains
+  const topChains = calculateTopChains(successfulRequests, chains, 'all');
+  const topOriginChains = calculateTopChains(successfulRequests, chains, 'origin');
+  const topDestinationChains = calculateTopChains(successfulRequests, chains, 'destination');
+
   return {
     transactionCount,
     totalVolumeUsd,
+    topChains,
+    topOriginChains,
+    topDestinationChains,
   };
 }
 

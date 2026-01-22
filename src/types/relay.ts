@@ -71,8 +71,43 @@ export interface RelayResponse {
   continuation?: string;
 }
 
+// Chain information from /chains endpoint
+export interface Chain {
+  id: number;
+  name: string;
+  displayName: string;
+  httpRpcUrl?: string;
+  wsRpcUrl?: string;
+  explorerUrl?: string;
+  explorerName?: string;
+  explorerPaths?: {
+    transaction?: string;
+    address?: string;
+  };
+  depositEnabled?: boolean;
+  tokenSupport?: string;
+  disabled?: boolean;
+  partialDisableLimit?: number;
+  iconUrl?: string;
+  logoUrl?: string;
+  brandColor?: string;
+  contracts?: Record<string, unknown>;
+  vmType?: string;
+}
+
+// Chain statistics
+export interface ChainStats {
+  chainId: number;
+  chainName: string;
+  iconUrl?: string;
+  count: number;
+}
+
 // Aggregated wallet statistics
 export interface WalletStats {
   transactionCount: number;
   totalVolumeUsd: number;
+  topChains: ChainStats[];
+  topOriginChains: ChainStats[];
+  topDestinationChains: ChainStats[];
 }

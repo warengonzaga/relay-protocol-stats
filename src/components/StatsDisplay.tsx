@@ -87,6 +87,86 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
         </Card>
       </div>
 
+      {/* Top Chains Section */}
+      {stats.topChains.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-4">
+          {/* Favorite Chain */}
+          <Card>
+            <CardHeader className="pb-2 sm:pb-3">
+              <CardDescription className="text-xs">Favorite</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center py-4 space-y-2">
+              {stats.topChains[0]?.iconUrl ? (
+                <>
+                  <img
+                    src={stats.topChains[0].iconUrl}
+                    alt={stats.topChains[0].chainName}
+                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-full"
+                  />
+                  <p className="text-xs sm:text-sm font-medium text-center">
+                    {stats.topChains[0].chainName}
+                  </p>
+                </>
+              ) : (
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground">N/A</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top Origin Chain */}
+          <Card>
+            <CardHeader className="pb-2 sm:pb-3">
+              <CardDescription className="text-xs">Origin</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center py-4 space-y-2">
+              {stats.topOriginChains[0]?.iconUrl ? (
+                <>
+                  <img
+                    src={stats.topOriginChains[0].iconUrl}
+                    alt={stats.topOriginChains[0].chainName}
+                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-full"
+                  />
+                  <p className="text-xs sm:text-sm font-medium text-center">
+                    {stats.topOriginChains[0].chainName}
+                  </p>
+                </>
+              ) : (
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground">N/A</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top Destination Chain */}
+          <Card>
+            <CardHeader className="pb-2 sm:pb-3">
+              <CardDescription className="text-xs">Destination</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center py-4 space-y-2">
+              {stats.topDestinationChains[0]?.iconUrl ? (
+                <>
+                  <img
+                    src={stats.topDestinationChains[0].iconUrl}
+                    alt={stats.topDestinationChains[0].chainName}
+                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-full"
+                  />
+                  <p className="text-xs sm:text-sm font-medium text-center">
+                    {stats.topDestinationChains[0].chainName}
+                  </p>
+                </>
+              ) : (
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground">N/A</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {stats.transactionCount === 0 && (
         <Card className="border-yellow-200 bg-yellow-50">
           <CardContent className="pt-4 sm:pt-5">

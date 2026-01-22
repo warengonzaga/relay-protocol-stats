@@ -150,7 +150,9 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
   // Calculate transaction count
   const transactionCount = successfulRequests.length;
   const totalRequests = allRequests.length;
+  // Count failed and refunded transactions separately
   const failedRequests = allRequests.filter(req => req.status === 'failure').length;
+  const refundedRequests = allRequests.filter(req => req.status === 'refund').length;
 
   // Calculate success rate (percentage)
   const successRate = totalRequests > 0 ? (transactionCount / totalRequests) * 100 : 0;
@@ -174,6 +176,7 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
     successRate,
     totalRequests,
     failedRequests,
+    refundedRequests,
   };
 }
 

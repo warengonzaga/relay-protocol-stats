@@ -113,4 +113,5 @@ export interface WalletStats {
   successRate: number;
   totalRequests: number;
   failedRequests: number;
+  refundedRequests: number;
 }

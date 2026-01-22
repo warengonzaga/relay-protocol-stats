@@ -3,7 +3,11 @@
     "allow": [
       "Bash(pnpm add:*)",
       "Bash(pnpm dlx tailwindcss:*)",
-      "Bash(pnpm exec tailwindcss:*)"
+      "Bash(pnpm exec tailwindcss:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }

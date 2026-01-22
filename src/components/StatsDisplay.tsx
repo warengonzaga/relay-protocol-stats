@@ -62,8 +62,8 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
-              <p className="text-2xl sm:text-3xl font-bold">{stats.transactionCount.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Successful only</p>
+              <p className="text-2xl sm:text-3xl font-bold">{stats.totalRequests.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">{stats.transactionCount} successful</p>
             </div>
           </CardContent>
         </Card>
@@ -100,7 +100,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
                 })}%
               </p>
               <p className="text-xs text-muted-foreground">
-                {stats.failedRequests} failed of {stats.totalRequests} total
+                {stats.transactionCount} success, {stats.failedRequests} failed, {stats.refundedRequests} refunded
               </p>
             </div>
           </CardContent>

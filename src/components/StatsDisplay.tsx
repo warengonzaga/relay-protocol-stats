@@ -93,7 +93,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
           {/* Favorite Chain */}
           <Card>
             <CardHeader className="pb-2 sm:pb-3">
-              <CardDescription className="text-xs">Favorite</CardDescription>
+              <CardDescription className="text-xs">Favorite Chain</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-4 space-y-2">
               {stats.topChains[0]?.iconUrl ? (
@@ -118,7 +118,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
           {/* Top Origin Chain */}
           <Card>
             <CardHeader className="pb-2 sm:pb-3">
-              <CardDescription className="text-xs">Origin</CardDescription>
+              <CardDescription className="text-xs">Top Origin Chain</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-4 space-y-2">
               {stats.topOriginChains[0]?.iconUrl ? (
@@ -143,7 +143,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
           {/* Top Destination Chain */}
           <Card>
             <CardHeader className="pb-2 sm:pb-3">
-              <CardDescription className="text-xs">Destination</CardDescription>
+              <CardDescription className="text-xs">Top Destination Chain</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-4 space-y-2">
               {stats.topDestinationChains[0]?.iconUrl ? (

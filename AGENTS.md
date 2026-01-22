@@ -98,6 +98,18 @@ When unsure which type to use, follow this order:
 - **Write for humans**: Your commit messages will be read by future you and teammates
 - **Be specific**: "fix bug" is less helpful than "fix wallet validation error"
 
+## Package Manager
+
+This project uses **pnpm** as the package manager. Always use pnpm commands:
+
+- **Install dependencies**: `pnpm install`
+- **Run dev server**: `pnpm run dev`
+- **Build project**: `pnpm run build`
+- **Add packages**: `pnpm add <package>`
+- **Remove packages**: `pnpm remove <package>`
+
+Do NOT use npm or yarn commands. The project includes both `pnpm-lock.yaml` and `package-lock.json`, but pnpm is the standard for this project.
+
 ## AI Agent Instructions
 
 When generating commits for this project:
@@ -108,5 +120,11 @@ When generating commits for this project:
 4. Use present tense and lowercase
 5. Add scope when it improves clarity (e.g., `(ui)`, `(api)`, `(deps)`)
 6. If multiple changes are made, create separate commits for each logical change
+
+When working with this project:
+
+1. Always use pnpm for package management (install, add, remove, run)
+2. Never use npm or yarn commands
+3. Respect the pnpm-lock.yaml file for dependency resolution
 
 For more details, see the full specification: https://github.com/wgtechlabs/clean-commit/blob/main/SPECIFICATION.md

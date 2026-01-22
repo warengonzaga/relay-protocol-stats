@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Copy, ExternalLink, Check, Share2, Eye, EyeOff } from 'lucide-react';
+import Avatar from 'boring-avatars';
 
 interface WalletInputProps {
   onAnalyze: (address: string) => void;
@@ -92,10 +93,13 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
         <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border rounded-lg p-4 sm:p-6 mb-4">
           <div className="flex items-start gap-3 sm:gap-4 mb-4">
             {/* Avatar */}
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center flex-shrink-0">
-              <span className="text-lg sm:text-2xl font-bold text-primary-foreground">
-                {analyzedAddress.slice(2, 4).toUpperCase()}
-              </span>
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex-shrink-0">
+              <Avatar
+                size={64}
+                name={analyzedAddress}
+                variant="pixel"
+                colors={['hsl(var(--primary))', 'hsl(var(--primary) / 0.8)', 'hsl(var(--primary) / 0.6)', 'hsl(var(--primary) / 0.4)', 'hsl(var(--primary) / 0.2)']}
+              />
             </div>
 
             {/* Wallet Info */}

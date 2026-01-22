@@ -149,6 +149,11 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
 
   // Calculate transaction count
   const transactionCount = successfulRequests.length;
+  const totalRequests = allRequests.length;
+  const failedRequests = allRequests.filter(req => req.status === 'failure').length;
+
+  // Calculate success rate (percentage)
+  const successRate = totalRequests > 0 ? (transactionCount / totalRequests) * 100 : 0;
 
   // Calculate total volume in USD
   const totalVolumeUsd = successfulRequests.reduce((total, request) => {
@@ -166,6 +171,9 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
     topChains,
     topOriginChains,
     topDestinationChains,
+    successRate,
+    totalRequests,
+    failedRequests,
   };
 }
 

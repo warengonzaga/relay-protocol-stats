@@ -54,7 +54,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {/* Total Transactions Card */}
         <Card>
           <CardHeader className="pb-2 sm:pb-3">
@@ -82,6 +82,26 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
                 })}
               </p>
               <p className="text-xs text-muted-foreground">USD transferred</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Success Rate Card */}
+        <Card>
+          <CardHeader className="pb-2 sm:pb-3">
+            <CardDescription className="text-xs">Success Rate</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              <p className="text-2xl sm:text-3xl font-bold">
+                {stats.successRate.toLocaleString(undefined, {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })}%
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {stats.failedRequests} failed of {stats.totalRequests} total
+              </p>
             </div>
           </CardContent>
         </Card>

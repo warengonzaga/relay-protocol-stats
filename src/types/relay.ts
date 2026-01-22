@@ -110,4 +110,7 @@ export interface WalletStats {
   topChains: ChainStats[];
   topOriginChains: ChainStats[];
   topDestinationChains: ChainStats[];
+  successRate: number;
+  totalRequests: number;
+  failedRequests: number;
 }

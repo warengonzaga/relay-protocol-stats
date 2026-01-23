@@ -57,16 +57,14 @@ export default function Footer() {
             </p>
 
             {/* Creator and Version */}
-            <div className="flex items-center justify-center gap-1.5">
+            <div className="flex items-center justify-center gap-1">
               <span>Built by</span>
               <a
                 href="https://github.com/warengonzaga"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-primary hover:underline"
-              >
-                Waren Gonzaga
-              </a>
+              >Waren Gonzaga</a>
               <span className="text-muted-foreground/50">•</span>
               <a
                 href={`${repoUrl}/releases`}

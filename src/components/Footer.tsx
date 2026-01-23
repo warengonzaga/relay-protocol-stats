@@ -2,7 +2,7 @@ import { Star, Bug, GitPullRequest, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Footer() {
-  const version = '1.1.0';
+  const version = '1.2.0';
   const repoUrl = 'https://github.com/warengonzaga/relay-protocol-stats';
 
   return (
@@ -74,6 +74,26 @@ export default function Footer() {
               >
                 v{version}
               </a>
+            </div>
+
+            {/* Follow on X Button */}
+            <div className="flex justify-center mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open('https://x.com/warengonzaga', '_blank', 'noopener,noreferrer')}
+                className="text-xs sm:text-sm"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                Follow @warengonzaga
+              </Button>
             </div>
           </div>
         </div>

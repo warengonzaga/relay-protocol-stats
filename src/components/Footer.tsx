@@ -2,15 +2,15 @@ import { Star, Bug, GitPullRequest, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Footer() {
-  const version = '1.0.0';
+  const version = '1.1.0';
   const repoUrl = 'https://github.com/warengonzaga/relay-protocol-stats';
 
   return (
-    <footer className="mt-10 sm:mt-12 md:mt-16 border-t border-border pt-6 sm:pt-8 pb-8 sm:pb-12">
+    <footer className="mt-8 sm:mt-10 border-t border-border pt-4 sm:pt-6 pb-6 sm:pb-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
-        <div className="space-y-4 sm:space-y-6 text-center">
+        <div className="space-y-3 sm:space-y-4 text-center">
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -50,28 +50,32 @@ export default function Footer() {
           </div>
 
           {/* Disclaimer */}
-          <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-muted-foreground">
+          <div className="space-y-2 text-xs sm:text-sm text-muted-foreground w-full sm:max-w-lg mx-auto">
             <p className="leading-relaxed">
-              <strong>Disclaimer:</strong> This project is not directly affiliated with or created by Relay Protocol.
-              It is an independent community project created for informational purposes only. While the author works at Relay Protocol,
-              this does not make it an official Relay product.
+              <strong>Disclaimer:</strong> This is an independent community project, not officially affiliated with Relay Protocol.
+              Built for informational purposes only.
             </p>
 
             {/* Creator and Version */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 pt-1 sm:pt-2">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <span>Created by</span>
-                <a
-                  href="https://github.com/warengonzaga"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-primary hover:underline"
-                >
-                  Waren Gonzaga
-                </a>
-              </div>
-              <span className="hidden sm:inline text-muted-foreground/50">•</span>
-              <span className="text-muted-foreground/70">v{version}</span>
+            <div className="flex items-center justify-center gap-1.5">
+              <span>Built by</span>
+              <a
+                href="https://github.com/warengonzaga"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary hover:underline"
+              >
+                Waren Gonzaga
+              </a>
+              <span className="text-muted-foreground/50">•</span>
+              <a
+                href={`${repoUrl}/releases`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground/70 hover:text-foreground hover:underline transition-colors"
+              >
+                v{version}
+              </a>
             </div>
           </div>
         </div>

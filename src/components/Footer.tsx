@@ -2,7 +2,7 @@ import { Star, Bug, GitPullRequest, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Footer() {
-  const version = '1.2.0';
+  const version = '1.2.1';
   const repoUrl = 'https://github.com/warengonzaga/relay-protocol-stats';
 
   return (

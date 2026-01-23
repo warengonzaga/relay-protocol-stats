@@ -246,8 +246,14 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
 
   // Show input form
   return (
-    <Card className="w-full mx-auto border-none shadow-xl bg-gradient-to-br from-card via-card to-primary/5">
-      <CardHeader className="space-y-3 sm:space-y-4 pb-4 sm:pb-6">
+    <div className="relative group w-full mx-auto">
+      {/* Flowing purple light effect - travels around perimeter on hover */}
+      <div className="absolute -inset-[2px] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 overflow-hidden" style={{ borderRadius: 'calc(var(--radius) + 2px)' }}>
+        <div className="absolute inset-[-100%] animate-border-spin-bg" />
+      </div>
+
+      <Card className="relative w-full border border-border/50 shadow-2xl bg-card transition-all duration-300 group-hover:shadow-[0_0_40px_rgba(139,92,246,0.2)] group-focus-within:shadow-[0_0_40px_rgba(139,92,246,0.2)]">
+        <CardHeader className="space-y-3 sm:space-y-4 pb-4 sm:pb-6">
         <div className="flex items-center gap-2">
           <div className="p-2 rounded-lg bg-primary/10">
             <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
@@ -308,6 +314,7 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
           )}
         </form>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }

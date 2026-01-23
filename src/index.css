@@ -50,4 +50,26 @@
   .animate-shimmer {
     animation: shimmer 2s infinite;
   }
+
+  @keyframes border-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-border-spin-bg {
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg 70deg,
+      hsl(var(--primary) / 0.5) 100deg,
+      hsl(var(--primary)) 130deg,
+      hsl(var(--primary) / 0.5) 160deg,
+      transparent 190deg 360deg
+    );
+    animation: border-spin 4s linear infinite;
+    filter: blur(12px);
+  }
 }

@@ -58,7 +58,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
         {/* Total Transactions Card */}
         <Card>
           <CardHeader className="pb-2 sm:pb-3">
-            <CardDescription className="text-xs">Total Transactions</CardDescription>
+            <CardDescription className="text-sm">Total Transactions</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
@@ -71,7 +71,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
         {/* Total Volume Card */}
         <Card>
           <CardHeader className="pb-2 sm:pb-3">
-            <CardDescription className="text-xs">Total Volume</CardDescription>
+            <CardDescription className="text-sm">Total Volume</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
@@ -89,15 +89,12 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
         {/* Success Rate Card */}
         <Card>
           <CardHeader className="pb-2 sm:pb-3">
-            <CardDescription className="text-xs">Success Rate</CardDescription>
+            <CardDescription className="text-sm">Success Rate</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
               <p className="text-2xl sm:text-3xl font-bold">
-                {stats.successRate.toLocaleString(undefined, {
-                  minimumFractionDigits: 1,
-                  maximumFractionDigits: 1,
-                })}%
+                {Math.round(stats.successRate)}%
               </p>
               <p className="text-xs text-muted-foreground">
                 {stats.transactionCount} success, {stats.failedRequests} failed, {stats.refundedRequests} refunded
@@ -113,7 +110,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
           {/* Favorite Chain */}
           <Card>
             <CardHeader className="pb-2 sm:pb-3">
-              <CardDescription className="text-xs">Favorite Chain</CardDescription>
+              <CardDescription className="text-sm">Favorite Chain</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-4 space-y-2">
               {stats.topChains[0]?.iconUrl ? (
@@ -123,7 +120,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
                     alt={stats.topChains[0].chainName}
                     className="w-12 h-12 sm:w-16 sm:h-16 rounded-full"
                   />
-                  <p className="text-xs sm:text-sm font-medium text-center">
+                  <p className="text-xs sm:text-sm font-normal text-center">
                     {stats.topChains[0].chainName}
                   </p>
                 </>
@@ -138,7 +135,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
           {/* Top Origin Chain */}
           <Card>
             <CardHeader className="pb-2 sm:pb-3">
-              <CardDescription className="text-xs">Top Origin Chain</CardDescription>
+              <CardDescription className="text-sm">Top Origin Chain</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-4 space-y-2">
               {stats.topOriginChains[0]?.iconUrl ? (
@@ -148,7 +145,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
                     alt={stats.topOriginChains[0].chainName}
                     className="w-12 h-12 sm:w-16 sm:h-16 rounded-full"
                   />
-                  <p className="text-xs sm:text-sm font-medium text-center">
+                  <p className="text-xs sm:text-sm font-normal text-center">
                     {stats.topOriginChains[0].chainName}
                   </p>
                 </>
@@ -163,7 +160,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
           {/* Top Destination Chain */}
           <Card>
             <CardHeader className="pb-2 sm:pb-3">
-              <CardDescription className="text-xs">Top Destination Chain</CardDescription>
+              <CardDescription className="text-sm">Top Destination Chain</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-4 space-y-2">
               {stats.topDestinationChains[0]?.iconUrl ? (
@@ -173,9 +170,206 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
                     alt={stats.topDestinationChains[0].chainName}
                     className="w-12 h-12 sm:w-16 sm:h-16 rounded-full"
                   />
-                  <p className="text-xs sm:text-sm font-medium text-center">
+                  <p className="text-xs sm:text-sm font-normal text-center">
                     {stats.topDestinationChains[0].chainName}
                   </p>
+                </>
+              ) : (
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground">N/A</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Top Tokens Section */}
+      {stats.topTokens && stats.topTokens.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-4">
+          {/* Favorite Token */}
+          <Card>
+            <CardHeader className="pb-2 sm:pb-3">
+              <CardDescription className="text-sm">Favorite Token</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center py-4 space-y-2">
+              {stats.topTokens[0]?.logoUrl ? (
+                <>
+                  <div className="relative">
+                    <img
+                      src={stats.topTokens[0].logoUrl}
+                      alt={stats.topTokens[0].tokenSymbol}
+                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full"
+                    />
+                    {stats.topTokens[0].chainIconUrl && (
+                      <img
+                        src={stats.topTokens[0].chainIconUrl}
+                        alt={stats.topTokens[0].chainName}
+                        className="absolute bottom-0 right-0 w-4 h-4 sm:w-6 sm:h-6 rounded-sm border-2 border-background"
+                      />
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs sm:text-sm font-normal">
+                      {stats.topTokens[0].tokenSymbol}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {stats.topTokens[0].tokenAddress.slice(0, 4)}...{stats.topTokens[0].tokenAddress.slice(-4)}
+                    </p>
+                  </div>
+                </>
+              ) : stats.topTokens[0] ? (
+                <>
+                  <div className="relative">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-xs font-bold text-muted-foreground">
+                        {stats.topTokens[0].tokenSymbol?.slice(0, 3)}
+                      </span>
+                    </div>
+                    {stats.topTokens[0].chainIconUrl && (
+                      <img
+                        src={stats.topTokens[0].chainIconUrl}
+                        alt={stats.topTokens[0].chainName}
+                        className="absolute bottom-0 right-0 w-4 h-4 sm:w-6 sm:h-6 rounded-sm border-2 border-background"
+                      />
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs sm:text-sm font-normal">
+                      {stats.topTokens[0].tokenSymbol}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {stats.topTokens[0].tokenAddress.slice(0, 4)}...{stats.topTokens[0].tokenAddress.slice(-4)}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground">N/A</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top Origin Token */}
+          <Card>
+            <CardHeader className="pb-2 sm:pb-3">
+              <CardDescription className="text-sm">Top Origin Token</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center py-4 space-y-2">
+              {stats.topOriginTokens[0]?.logoUrl ? (
+                <>
+                  <div className="relative">
+                    <img
+                      src={stats.topOriginTokens[0].logoUrl}
+                      alt={stats.topOriginTokens[0].tokenSymbol}
+                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full"
+                    />
+                    {stats.topOriginTokens[0].chainIconUrl && (
+                      <img
+                        src={stats.topOriginTokens[0].chainIconUrl}
+                        alt={stats.topOriginTokens[0].chainName}
+                        className="absolute bottom-0 right-0 w-4 h-4 sm:w-6 sm:h-6 rounded-sm border-2 border-background"
+                      />
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs sm:text-sm font-normal">
+                      {stats.topOriginTokens[0].tokenSymbol}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {stats.topOriginTokens[0].tokenAddress.slice(0, 4)}...{stats.topOriginTokens[0].tokenAddress.slice(-4)}
+                    </p>
+                  </div>
+                </>
+              ) : stats.topOriginTokens[0] ? (
+                <>
+                  <div className="relative">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-xs font-bold text-muted-foreground">
+                        {stats.topOriginTokens[0].tokenSymbol?.slice(0, 3)}
+                      </span>
+                    </div>
+                    {stats.topOriginTokens[0].chainIconUrl && (
+                      <img
+                        src={stats.topOriginTokens[0].chainIconUrl}
+                        alt={stats.topOriginTokens[0].chainName}
+                        className="absolute bottom-0 right-0 w-4 h-4 sm:w-6 sm:h-6 rounded-sm border-2 border-background"
+                      />
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs sm:text-sm font-normal">
+                      {stats.topOriginTokens[0].tokenSymbol}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {stats.topOriginTokens[0].tokenAddress.slice(0, 4)}...{stats.topOriginTokens[0].tokenAddress.slice(-4)}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground">N/A</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top Destination Token */}
+          <Card>
+            <CardHeader className="pb-2 sm:pb-3">
+              <CardDescription className="text-sm">Top Destination Token</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center py-4 space-y-2">
+              {stats.topDestinationTokens[0]?.logoUrl ? (
+                <>
+                  <div className="relative">
+                    <img
+                      src={stats.topDestinationTokens[0].logoUrl}
+                      alt={stats.topDestinationTokens[0].tokenSymbol}
+                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full"
+                    />
+                    {stats.topDestinationTokens[0].chainIconUrl && (
+                      <img
+                        src={stats.topDestinationTokens[0].chainIconUrl}
+                        alt={stats.topDestinationTokens[0].chainName}
+                        className="absolute bottom-0 right-0 w-4 h-4 sm:w-6 sm:h-6 rounded-sm border-2 border-background"
+                      />
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs sm:text-sm font-normal">
+                      {stats.topDestinationTokens[0].tokenSymbol}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {stats.topDestinationTokens[0].tokenAddress.slice(0, 4)}...{stats.topDestinationTokens[0].tokenAddress.slice(-4)}
+                    </p>
+                  </div>
+                </>
+              ) : stats.topDestinationTokens[0] ? (
+                <>
+                  <div className="relative">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-xs font-bold text-muted-foreground">
+                        {stats.topDestinationTokens[0].tokenSymbol?.slice(0, 3)}
+                      </span>
+                    </div>
+                    {stats.topDestinationTokens[0].chainIconUrl && (
+                      <img
+                        src={stats.topDestinationTokens[0].chainIconUrl}
+                        alt={stats.topDestinationTokens[0].chainName}
+                        className="absolute bottom-0 right-0 w-4 h-4 sm:w-6 sm:h-6 rounded-sm border-2 border-background"
+                      />
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs sm:text-sm font-normal">
+                      {stats.topDestinationTokens[0].tokenSymbol}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {stats.topDestinationTokens[0].tokenAddress.slice(0, 4)}...{stats.topDestinationTokens[0].tokenAddress.slice(-4)}
+                    </p>
+                  </div>
                 </>
               ) : (
                 <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted flex items-center justify-center">

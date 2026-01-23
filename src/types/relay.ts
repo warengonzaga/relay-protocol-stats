@@ -103,6 +103,32 @@ export interface ChainStats {
   count: number;
 }
 
+// Token statistics
+export interface TokenStats {
+  tokenAddress: string;
+  tokenSymbol: string;
+  chainId: number;
+  chainName: string;
+  chainIconUrl?: string;
+  logoUrl?: string;
+  count: number;
+}
+
+// Currency/Token metadata from /currencies endpoint
+export interface Currency {
+  address: string;
+  chainId: number;
+  name: string;
+  symbol: string;
+  decimals: number;
+  logoURI?: string;
+  metadata?: {
+    logoURI?: string;
+    verified?: boolean;
+    isNative?: boolean;
+  };
+}
+
 // Aggregated wallet statistics
 export interface WalletStats {
   transactionCount: number;
@@ -110,6 +136,9 @@ export interface WalletStats {
   topChains: ChainStats[];
   topOriginChains: ChainStats[];
   topDestinationChains: ChainStats[];
+  topTokens: TokenStats[];
+  topOriginTokens: TokenStats[];
+  topDestinationTokens: TokenStats[];
   successRate: number;
   totalRequests: number;
   failedRequests: number;

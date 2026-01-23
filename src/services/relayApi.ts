@@ -1,9 +1,10 @@
 import axios from 'axios';
-import type { RelayResponse, RelayRequest, WalletStats, Chain, ChainStats } from '../types/relay';
+import type { RelayResponse, RelayRequest, WalletStats, Chain, ChainStats, TokenStats, Currency } from '../types/relay';
 
 const BASE_URL = 'https://api.relay.link';
 const REQUESTS_ENDPOINT = '/requests/v2';
 const CHAINS_ENDPOINT = '/chains';
+const CURRENCIES_ENDPOINT = '/currencies/v2';
 
 /**
  * Fetch all requests for a user address with automatic pagination
@@ -95,6 +96,29 @@ export async function fetchChains(): Promise<Chain[]> {
 }
 
 /**
+ * Fetch currencies/tokens from Relay API
+ */
+export async function fetchCurrencies(): Promise<Currency[]> {
+  try {
+    // The currencies endpoint is a POST request
+    const response = await axios.post(`${BASE_URL}${CURRENCIES_ENDPOINT}`, {});
+    const data = response.data;
+
+    // The API returns an array of currencies
+    if (data && Array.isArray(data)) {
+      return data as Currency[];
+    }
+
+    return [];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(`Failed to fetch currencies: ${error.response?.data?.message || error.message}`);
+    }
+    throw error;
+  }
+}
+
+/**
  * Calculate top chains statistics
  */
 function calculateTopChains(
@@ -136,12 +160,206 @@ function calculateTopChains(
 }
 
 /**
+ * Native token metadata by chain ID
+ * Used as fallback when currency lookup fails
+ */
+const NATIVE_TOKEN_METADATA: Record<number, { symbol: string; logoUrl: string }> = {
+  1: {
+    symbol: 'ETH',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
+  },
+  10: {
+    symbol: 'ETH',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
+  },
+  56: {
+    symbol: 'BNB',
+    logoUrl: 'https://assets.relay.link/icons/currencies/bnb.png'
+  },
+  137: {
+    symbol: 'MATIC',
+    logoUrl: 'https://assets.relay.link/icons/currencies/matic.png'
+  },
+  250: {
+    symbol: 'FTM',
+    logoUrl: 'https://assets.relay.link/icons/currencies/ftm.png'
+  },
+  8453: {
+    symbol: 'ETH',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
+  },
+  42161: {
+    symbol: 'ETH',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
+  },
+  43114: {
+    symbol: 'AVAX',
+    logoUrl: 'https://assets.relay.link/icons/currencies/avax.png'
+  },
+  7777777: {
+    symbol: 'ETH',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
+  },
+  59144: {
+    symbol: 'ETH',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
+  },
+  534352: {
+    symbol: 'ETH',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
+  },
+  81457: {
+    symbol: 'ETH',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
+  },
+};
+
+/**
+ * Calculate top tokens statistics
+ */
+function calculateTopTokens(
+  requests: RelayRequest[],
+  chains: Chain[],
+  currencies: Currency[],
+  type: 'all' | 'origin' | 'destination'
+): TokenStats[] {
+  // Map to track token usage: key = "tokenAddress:chainId", value = count
+  const tokenCounts = new Map<string, { address: string; chainId: number; count: number; symbol?: string }>();
+
+  requests.forEach(request => {
+    // Get token from currency field (this is the token contract address)
+    let tokenAddress = request.data.currency;
+    if (!tokenAddress || typeof tokenAddress !== 'string') {
+      return; // Skip if no currency or invalid
+    }
+    
+    // Normalize native token addresses
+    // Native tokens like 'eth', 'bnb', 'matic' should be converted to zero address
+    const isNativeToken = tokenAddress.toLowerCase() === 'eth' ||
+        tokenAddress.toLowerCase() === 'bnb' ||
+        tokenAddress.toLowerCase() === 'matic' ||
+        tokenAddress.toLowerCase() === 'avax' ||
+        tokenAddress.toLowerCase() === 'ftm' ||
+        !tokenAddress.startsWith('0x');
+    
+    if (isNativeToken) {
+      tokenAddress = '0x0000000000000000000000000000000000000000';
+    }
+
+    // Get token symbol - ensure it's always a string
+    let tokenSymbol = 'Unknown';
+
+    // Try to extract from amountFormatted (e.g., "1.5 USDC" -> "USDC")
+    const amountFormatted = request.data.metadata?.currencyIn?.amountFormatted;
+    if (amountFormatted && typeof amountFormatted === 'string') {
+      const match = amountFormatted.match(/([A-Z]{2,10})$/i);
+      if (match) {
+        tokenSymbol = match[1].toUpperCase();
+      }
+    }
+
+    // If still unknown, don't set a fallback yet - we'll handle it later with chain-specific logic
+    // This prevents the "0X00...0000" issue
+
+    if (type === 'all' || type === 'origin') {
+      request.data.inTxs.forEach(tx => {
+        const key = `${tokenAddress}:${tx.chainId}`;
+        const existing = tokenCounts.get(key);
+        if (existing) {
+          existing.count++;
+        } else {
+          tokenCounts.set(key, {
+            address: tokenAddress,
+            chainId: tx.chainId,
+            count: 1,
+            symbol: tokenSymbol,
+          });
+        }
+      });
+    }
+
+    if (type === 'all' || type === 'destination') {
+      request.data.outTxs.forEach(tx => {
+        const key = `${tokenAddress}:${tx.chainId}`;
+        const existing = tokenCounts.get(key);
+        if (existing) {
+          existing.count++;
+        } else {
+          tokenCounts.set(key, {
+            address: tokenAddress,
+            chainId: tx.chainId,
+            count: 1,
+            symbol: tokenSymbol,
+          });
+        }
+      });
+    }
+  });
+
+  // Convert to array and sort by count
+  const tokenStats: TokenStats[] = Array.from(tokenCounts.values())
+    .map(token => {
+      const chain = chains.find(c => c.id === token.chainId);
+
+      // Check if this is a native token (zero address)
+      const isNativeToken = token.address === '0x0000000000000000000000000000000000000000';
+
+      // Find currency metadata for logo
+      const currency = currencies.find(
+        c => c.address.toLowerCase() === token.address.toLowerCase() && c.chainId === token.chainId
+      );
+
+      // Use symbol from currency metadata if available
+      let finalSymbol = currency?.symbol || token.symbol || 'Unknown';
+
+      // Get logo URL from currency metadata
+      let logoUrl = currency?.logoURI || currency?.metadata?.logoURI;
+
+      // Fallback for native tokens when currency data is missing
+      if (isNativeToken && !currency) {
+        const nativeMetadata = NATIVE_TOKEN_METADATA[token.chainId];
+        if (nativeMetadata) {
+          if (finalSymbol === 'Unknown') {
+            finalSymbol = nativeMetadata.symbol;
+          }
+          logoUrl = nativeMetadata.logoUrl;
+        }
+      }
+
+      // If symbol is still 'Unknown' and this is a native token, use ETH as default
+      if (finalSymbol === 'Unknown' && isNativeToken) {
+        finalSymbol = 'ETH';
+      }
+
+      // Last resort: if still unknown, use truncated address (only for non-native tokens)
+      if (finalSymbol === 'Unknown' && !isNativeToken) {
+        finalSymbol = `${token.address.slice(0, 4).toUpperCase()}...${token.address.slice(-4).toUpperCase()}`;
+      }
+
+      return {
+        tokenAddress: token.address,
+        tokenSymbol: finalSymbol,
+        chainId: token.chainId,
+        chainName: chain?.displayName || chain?.name || `Chain ${token.chainId}`,
+        chainIconUrl: chain?.iconUrl || chain?.logoUrl,
+        logoUrl,
+        count: token.count,
+      };
+    })
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5); // Top 5 tokens
+
+  return tokenStats;
+}
+
+/**
  * Analyze wallet statistics
  */
 export async function analyzeWalletStats(userAddress: string): Promise<WalletStats> {
-  const [allRequests, chains] = await Promise.all([
+  const [allRequests, chains, currencies] = await Promise.all([
     fetchAllUserRequests(userAddress),
     fetchChains(),
+    fetchCurrencies(),
   ]);
 
   // Filter only successful transactions
@@ -167,12 +385,20 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
   const topOriginChains = calculateTopChains(successfulRequests, chains, 'origin');
   const topDestinationChains = calculateTopChains(successfulRequests, chains, 'destination');
 
+  // Calculate top tokens
+  const topTokens = calculateTopTokens(successfulRequests, chains, currencies, 'all');
+  const topOriginTokens = calculateTopTokens(successfulRequests, chains, currencies, 'origin');
+  const topDestinationTokens = calculateTopTokens(successfulRequests, chains, currencies, 'destination');
+
   return {
     transactionCount,
     totalVolumeUsd,
     topChains,
     topOriginChains,
     topDestinationChains,
+    topTokens: topTokens || [],
+    topOriginTokens: topOriginTokens || [],
+    topDestinationTokens: topDestinationTokens || [],
     successRate,
     totalRequests,
     failedRequests,

@@ -35,7 +35,7 @@ export default function FAQ() {
           <Card key={faq.question} className="p-0 overflow-hidden transition-all duration-300">
             <Button
               variant="ghost"
-              className="w-full flex justify-between items-center px-4 py-3 text-left text-base font-medium h-auto min-h-[48px]"
+              className="w-full flex justify-between items-center px-4 py-3 text-left text-base font-medium h-auto min-h-[48px] text-gray-100"
               aria-expanded={openIndex === idx}
               aria-controls={`faq-panel-${idx}`}
               onClick={() => handleToggle(idx)}
@@ -51,7 +51,7 @@ export default function FAQ() {
                 openIndex === idx ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
               }`}
             >
-              <div className="px-4 pb-4 text-gray-700">
+              <div className="px-4 pb-4 text-gray-100">
                 {faq.answer}
               </div>
             </div>

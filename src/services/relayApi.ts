@@ -16,6 +16,26 @@ const CHAINS_ENDPOINT = '/chains';
 const CURRENCIES_ENDPOINT = '/currencies/v2';
 
 /**
+ * Fetch recent requests from Relay API for random wallet selection
+ */
+export async function fetchRecentRequests(limit: number = 6): Promise<RelayRequest[]> {
+  try {
+    const response = await axios.get<RelayResponse>(`${BASE_URL}${REQUESTS_ENDPOINT}`, {
+      params: {
+        limit: limit.toString(),
+      },
+    });
+
+    return response.data.requests || [];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(`Failed to fetch recent transactions: ${error.response?.data?.message || error.message}`);
+    }
+    throw error;
+  }
+}
+
+/**
  * Fetch all requests for a user address with automatic pagination
  */
 export async function fetchAllUserRequests(userAddress: string): Promise<RelayRequest[]> {

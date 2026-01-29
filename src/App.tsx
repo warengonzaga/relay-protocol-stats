@@ -110,9 +110,9 @@ function App() {
       <div className="max-w-3xl mx-auto flex-1 w-full">
         <header className="text-center mb-8 sm:mb-10 md:mb-12 space-y-3 sm:space-y-4">
           <div className="flex items-center justify-center gap-2 sm:gap-3">
-            <RelayLogo className="h-12 sm:h-14 md:h-16" />
+            <RelayLogo className="h-10 sm:h-12 md:h-14" />
           </div>
-          <p className="text-muted-foreground text-base sm:text-lg px-4">
+          <p className="text-muted-foreground text-sm sm:text-base px-4">
             Analyze your cross-chain transaction history
           </p>
         </header>

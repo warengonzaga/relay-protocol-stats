@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { isValidEthereumAddress } from '@/services/relayApi';
+import { useState, useEffect } from 'react';
+import { isValidEthereumAddress, fetchRecentRequests } from '@/services/relayApi';
 import { resolveENSToAddress } from '@/services/ens';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Copy, ExternalLink, Check, Share2, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Copy, ExternalLink, Check, Share2, Eye, EyeOff, Sparkles, X } from 'lucide-react';
 import Avatar from 'boring-avatars';
 
 interface WalletInputProps {
@@ -21,6 +21,32 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
   const [isAddressVisible, setIsAddressVisible] = useState(false);
+  const [isLoadingRandom, setIsLoadingRandom] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipDismissed, setTooltipDismissed] = useState(false);
+
+  // Show tooltip after 15 seconds if user hasn't analyzed a wallet yet and hasn't dismissed it
+  useEffect(() => {
+    if (!analyzedAddress && !tooltipDismissed) {
+      const timer = setTimeout(() => {
+        setShowTooltip(true);
+      }, 15000); // 15 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [analyzedAddress, tooltipDismissed]);
+
+  // Auto-dismiss tooltip after 1 minute of being shown
+  useEffect(() => {
+    if (showTooltip) {
+      const timer = setTimeout(() => {
+        setShowTooltip(false);
+        setTooltipDismissed(true);
+      }, 60000); // 1 minute
+
+      return () => clearTimeout(timer);
+    }
+  }, [showTooltip]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +89,40 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
     setCopied(false);
     setShared(false);
     onReset();
+  };
+
+  const handleRandomWallet = async () => {
+    setError('');
+    setIsLoadingRandom(true);
+    
+    try {
+      // Fetch 6 recent transactions
+      const recentRequests = await fetchRecentRequests(6);
+      
+      if (recentRequests.length === 0) {
+        setError('No recent transactions found');
+        setIsLoadingRandom(false);
+        return;
+      }
+      
+      // Randomly pick one transaction
+      const randomIndex = Math.floor(Math.random() * recentRequests.length);
+      const randomRequest = recentRequests[randomIndex];
+      
+      // Get the user address from the transaction
+      const randomAddress = randomRequest.user;
+      
+      if (randomAddress && isValidEthereumAddress(randomAddress)) {
+        onAnalyze(randomAddress);
+      } else {
+        setError('Invalid wallet address from transaction');
+      }
+    } catch (err) {
+      setError('Failed to fetch random wallet. Please try again.');
+      console.error('Random wallet error:', err);
+    } finally {
+      setIsLoadingRandom(false);
+    }
   };
 
   const handleCopy = async () => {
@@ -283,9 +343,41 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
                 disabled={isLoading}
                 className="font-mono text-xs sm:text-sm h-11 sm:h-12 bg-background/50 border-2 focus:border-primary transition-colors pr-12"
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40">
-                <Sparkles className="h-4 w-4" />
-              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleRandomWallet}
+                disabled={isLoading || isLoadingRandom}
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-9 px-3 hover:bg-primary/10 z-10"
+                title="Analyze random wallet"
+              >
+                {isLoadingRandom ? (
+                  <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4 text-primary" />
+                )}
+              </Button>
+              {showTooltip && !analyzedAddress && (
+                <div className="absolute right-0 top-full mt-0.5 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="relative bg-card border-2 border-primary text-foreground rounded-lg shadow-xl p-3 pr-8 w-[200px] sm:w-[240px]">
+                    <button
+                      onClick={() => {
+                        setShowTooltip(false);
+                        setTooltipDismissed(true);
+                      }}
+                      className="absolute right-2 top-2 hover:opacity-70 transition-opacity"
+                      aria-label="Close tooltip"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                    <p className="text-xs sm:text-sm font-medium leading-relaxed">
+                      💡 Click the sparkle icon to analyze a random wallet!
+                    </p>
+                    <div className="absolute -top-2 right-3 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-primary" />
+                  </div>
+                </div>
+              )}
             </div>
             {error && (
               <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">

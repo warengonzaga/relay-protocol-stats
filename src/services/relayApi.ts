@@ -103,8 +103,7 @@ function calculateVolumeUsd(request: RelayRequest): number {
 }
 
 /**
- * Calculate volume by (source/origin) chain in USD from successful requests
- * Collects all unique chainIds from inTxs + outTxs for each request and attributes the request volume to each chain.
+ * Calculate volume by source/origin chain (inTxs only; fallback to outTxs if no inTxs) in USD from successful requests.
  */
 function calculateVolumeByChain(requests: RelayRequest[], chains: Chain[]): ChainVolume[] {
   const volumeByChainId = new Map<number, number>();
@@ -117,17 +116,22 @@ function calculateVolumeByChain(requests: RelayRequest[], chains: Chain[]): Chai
 
     const chainIds = new Set<number>();
 
-    request.data.inTxs?.forEach(tx => {
-      if (typeof tx.chainId === 'number') {
-        chainIds.add(tx.chainId);
-      }
-    });
+    const inTxs = request.data.inTxs ?? [];
+    const outTxs = request.data.outTxs ?? [];
 
-    request.data.outTxs?.forEach(tx => {
-      if (typeof tx.chainId === 'number') {
-        chainIds.add(tx.chainId);
-      }
-    });
+    if (inTxs.length > 0) {
+      inTxs.forEach(tx => {
+        if (typeof tx.chainId === 'number') {
+          chainIds.add(tx.chainId);
+        }
+      });
+    } else {
+      outTxs.forEach(tx => {
+        if (typeof tx.chainId === 'number') {
+          chainIds.add(tx.chainId);
+        }
+      });
+    }
 
     if (chainIds.size === 0) {
       return;

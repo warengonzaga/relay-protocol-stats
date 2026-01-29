@@ -1,5 +1,14 @@
 import axios from 'axios';
-import type { RelayResponse, RelayRequest, WalletStats, Chain, ChainStats, TokenStats, Currency } from '../types/relay';
+import type {
+  RelayResponse,
+  RelayRequest,
+  WalletStats,
+  Chain,
+  ChainStats,
+  TokenStats,
+  Currency,
+  ChainVolume,
+} from '../types/relay';
 
 const BASE_URL = 'https://api.relay.link';
 const REQUESTS_ENDPOINT = '/requests/v2';
@@ -71,6 +80,43 @@ function calculateVolumeUsd(request: RelayRequest): number {
     console.error('Error calculating volume:', error);
     return 0;
   }
+}
+
+/**
+ * Calculate volume by (source/origin) chain in USD from successful requests
+ * Uses inTxs[0].chainId as the "source chain" when available, otherwise falls back to outTxs[0].chainId.
+ */
+function calculateVolumeByChain(requests: RelayRequest[], chains: Chain[]): ChainVolume[] {
+  const volumeByChainId = new Map<number, number>();
+
+  requests.forEach(request => {
+    const sourceChainId =
+      request.data.inTxs?.[0]?.chainId ??
+      request.data.outTxs?.[0]?.chainId;
+
+    if (typeof sourceChainId !== 'number') {
+      return;
+    }
+
+    const volumeUsd = calculateVolumeUsd(request);
+    if (!volumeUsd) {
+      return;
+    }
+
+    volumeByChainId.set(sourceChainId, (volumeByChainId.get(sourceChainId) || 0) + volumeUsd);
+  });
+
+  return Array.from(volumeByChainId.entries())
+    .map(([chainId, volumeUsd]) => {
+      const chain = chains.find(c => c.id === chainId);
+      return {
+        chainId,
+        chainName: chain?.displayName || chain?.name || `Chain ${chainId}`,
+        iconUrl: chain?.iconUrl || chain?.logoUrl,
+        volumeUsd,
+      };
+    })
+    .sort((a, b) => b.volumeUsd - a.volumeUsd);
 }
 
 /**
@@ -380,6 +426,9 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
     return total + calculateVolumeUsd(request);
   }, 0);
 
+  // Calculate volume by chain (source/origin)
+  const volumeByChain = calculateVolumeByChain(successfulRequests, chains);
+
   // Calculate top chains
   const topChains = calculateTopChains(successfulRequests, chains, 'all');
   const topOriginChains = calculateTopChains(successfulRequests, chains, 'origin');
@@ -393,6 +442,7 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
   return {
     transactionCount,
     totalVolumeUsd,
+    volumeByChain,
     topChains,
     topOriginChains,
     topDestinationChains,

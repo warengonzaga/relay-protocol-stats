@@ -103,6 +103,14 @@ export interface ChainStats {
   count: number;
 }
 
+// Chain volume breakdown
+export interface ChainVolume {
+  chainId: number;
+  chainName: string;
+  iconUrl?: string;
+  volumeUsd: number;
+}
+
 // Token statistics
 export interface TokenStats {
   tokenAddress: string;
@@ -133,6 +141,7 @@ export interface Currency {
 export interface WalletStats {
   transactionCount: number;
   totalVolumeUsd: number;
+  volumeByChain: ChainVolume[];
   topChains: ChainStats[];
   topOriginChains: ChainStats[];
   topDestinationChains: ChainStats[];

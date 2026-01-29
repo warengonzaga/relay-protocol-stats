@@ -104,6 +104,48 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
         </Card>
       </div>
 
+      {/* Volume by Chain Section */}
+      <Card className="mt-4">
+        <CardHeader className="space-y-1 sm:space-y-2">
+          <CardTitle className="text-base sm:text-lg">Volume by Chain</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
+            Total USD volume grouped by source chain
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {stats.volumeByChain && stats.volumeByChain.length > 0 ? (
+            <div className="space-y-2">
+              {stats.volumeByChain.map(chain => (
+                <div
+                  key={chain.chainId}
+                  className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {chain.iconUrl ? (
+                      <img
+                        src={chain.iconUrl}
+                        alt={chain.chainName}
+                        className="w-5 h-5 rounded-sm shrink-0"
+                      />
+                    ) : (
+                      <div className="w-5 h-5 rounded-sm bg-muted shrink-0" />
+                    )}
+                    <p className="text-xs sm:text-sm font-normal truncate">{chain.chainName}</p>
+                  </div>
+                  <p className="text-xs sm:text-sm font-semibold tabular-nums shrink-0">
+                    ${chain.volumeUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              No chain breakdown available
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Top Chains Section */}
       {stats.topChains.length > 0 && (
         <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-4">

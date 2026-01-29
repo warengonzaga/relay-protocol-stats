@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { analyzeWalletStats, isValidEthereumAddress } from '@/services/relayApi';
 import { resolveENS } from '@/services/ens';
 import type { WalletStats } from '@/types/relay';
+import FAQ from '@/components/FAQ';
 
 function App() {
   const [stats, setStats] = useState<WalletStats | null>(null);
@@ -130,6 +131,7 @@ function App() {
         {!isLoading && <StatsDisplay stats={stats} error={error} onRefresh={handleRefresh} isRefreshing={isRefreshing} />}
       </div>
 
+      {!isLoading && !analyzedAddress && <FAQ />}
       <Footer />
     </div>
   );

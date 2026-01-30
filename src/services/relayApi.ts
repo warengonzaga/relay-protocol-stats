@@ -125,7 +125,9 @@ function calculateVolumeByChain(requests: RelayRequest[], chains: Chain[]): Chai
           chainIds.add(tx.chainId);
         }
       });
-    } else {
+    }
+
+    if (chainIds.size === 0) {
       outTxs.forEach(tx => {
         if (typeof tx.chainId === 'number') {
           chainIds.add(tx.chainId);

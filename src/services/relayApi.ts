@@ -1,5 +1,14 @@
 import axios from 'axios';
-import type { RelayResponse, RelayRequest, WalletStats, Chain, ChainStats, TokenStats, Currency } from '../types/relay';
+import type {
+  RelayResponse,
+  RelayRequest,
+  WalletStats,
+  Chain,
+  ChainStats,
+  TokenStats,
+  Currency,
+  ChainVolume,
+} from '../types/relay';
 
 const BASE_URL = 'https://api.relay.link';
 const REQUESTS_ENDPOINT = '/requests/v2';
@@ -91,6 +100,61 @@ function calculateVolumeUsd(request: RelayRequest): number {
     console.error('Error calculating volume:', error);
     return 0;
   }
+}
+
+/**
+ * Calculate volume by source/origin chain (inTxs only; fallback to outTxs if no inTxs) in USD from successful requests.
+ */
+function calculateVolumeByChain(requests: RelayRequest[], chains: Chain[]): ChainVolume[] {
+  const volumeByChainId = new Map<number, number>();
+
+  requests.forEach(request => {
+    const volumeUsd = calculateVolumeUsd(request);
+    if (!volumeUsd) {
+      return;
+    }
+
+    const chainIds = new Set<number>();
+
+    const inTxs = request.data.inTxs ?? [];
+    const outTxs = request.data.outTxs ?? [];
+
+    if (inTxs.length > 0) {
+      inTxs.forEach(tx => {
+        if (typeof tx.chainId === 'number') {
+          chainIds.add(tx.chainId);
+        }
+      });
+    }
+
+    if (chainIds.size === 0) {
+      outTxs.forEach(tx => {
+        if (typeof tx.chainId === 'number') {
+          chainIds.add(tx.chainId);
+        }
+      });
+    }
+
+    if (chainIds.size === 0) {
+      return;
+    }
+
+    chainIds.forEach(chainId => {
+      volumeByChainId.set(chainId, (volumeByChainId.get(chainId) || 0) + volumeUsd);
+    });
+  });
+
+  return Array.from(volumeByChainId.entries())
+    .map(([chainId, volumeUsd]) => {
+      const chain = chains.find(c => c.id === chainId);
+      return {
+        chainId,
+        chainName: chain?.displayName || chain?.name || `Chain ${chainId}`,
+        iconUrl: chain?.iconUrl || chain?.logoUrl,
+        volumeUsd,
+      };
+    })
+    .sort((a, b) => b.volumeUsd - a.volumeUsd);
 }
 
 /**
@@ -400,6 +464,9 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
     return total + calculateVolumeUsd(request);
   }, 0);
 
+  // Calculate volume by chain (source/origin)
+  const volumeByChain = calculateVolumeByChain(successfulRequests, chains);
+
   // Calculate top chains
   const topChains = calculateTopChains(successfulRequests, chains, 'all');
   const topOriginChains = calculateTopChains(successfulRequests, chains, 'origin');
@@ -413,6 +480,7 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
   return {
     transactionCount,
     totalVolumeUsd,
+    volumeByChain,
     topChains,
     topOriginChains,
     topDestinationChains,

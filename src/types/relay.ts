@@ -31,13 +31,13 @@ export interface CurrencyAmount {
   amountUsdCurrent?: string;
   amount?: string;
   amountFormatted?: string;
-  [key: string]: any;
+  [key: string]: string | undefined;
 }
 
 // Request metadata
 export interface RequestMetadata {
   currencyIn?: CurrencyAmount;
-  [key: string]: any;
+  [key: string]: CurrencyAmount | undefined;
 }
 
 // Request data

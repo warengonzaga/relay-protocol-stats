@@ -1,7 +1,10 @@
-import type { WalletStats } from '@/types/relay';
+import { useState } from 'react';
+import type { WalletStats, VolumeRangeKey } from '@/types/relay';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { cn } from '@/lib/utils';
 
 interface StatsDisplayProps {
   stats: WalletStats | null;
@@ -10,7 +13,10 @@ interface StatsDisplayProps {
   isRefreshing?: boolean;
 }
 
+const VOLUME_RANGES: VolumeRangeKey[] = ['7D', '30D', '1Y'];
+
 export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = false }: StatsDisplayProps) {
+  const [volumeRange, setVolumeRange] = useState<VolumeRangeKey>('7D');
   if (error) {
     return (
       <Card className="w-full mx-auto mt-6 sm:mt-8 border-destructive">
@@ -82,6 +88,67 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
                 })}
               </p>
               <p className="text-xs text-muted-foreground">USD transferred</p>
+              {stats.dailyVolumeByRange && (
+                <>
+                  <div className="mt-3 flex gap-1">
+                    {VOLUME_RANGES.map(range => (
+                      <button
+                        key={range}
+                        type="button"
+                        onClick={() => setVolumeRange(range)}
+                        className={cn(
+                          'rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                          volumeRange === range
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                        )}
+                      >
+                        {range}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-2 h-12 w-full">
+                    {stats.dailyVolumeByRange[volumeRange]?.some(d => d.volumeUsd > 0) ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={stats.dailyVolumeByRange[volumeRange]}
+                          margin={{ top: 2, right: 2, bottom: 2, left: 2 }}
+                        >
+                          <XAxis dataKey="date" hide />
+                          <YAxis hide />
+                          <Tooltip
+                            content={({ active, payload }) =>
+                              active && payload?.[0] ? (
+                                <div className="rounded-md border border-border bg-card px-2 py-1.5 text-xs shadow-sm">
+                                  <p className="font-medium">
+                                    ${(payload[0].value as number).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </p>
+                                  <p className="text-muted-foreground">{payload[0].payload.date}</p>
+                                </div>
+                              ) : null
+                            }
+                            cursor={{ stroke: 'hsl(var(--primary) / 0.5)', strokeWidth: 1 }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="volumeUsd"
+                            stroke="hsl(var(--primary))"
+                            strokeWidth={1.5}
+                            dot={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex h-full items-center justify-center rounded-md border border-dashed border-border bg-muted/30">
+                        <p className="text-xs text-muted-foreground">No activity in this period</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

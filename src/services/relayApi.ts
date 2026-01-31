@@ -8,6 +8,9 @@ import type {
   TokenStats,
   Currency,
   ChainVolume,
+  DailyVolume,
+  DailyVolumeByRange,
+  VolumeRangeKey,
 } from '../types/relay';
 
 const BASE_URL = 'https://api.relay.link';
@@ -100,6 +103,43 @@ function calculateVolumeUsd(request: RelayRequest): number {
     console.error('Error calculating volume:', error);
     return 0;
   }
+}
+
+const VOLUME_RANGE_DAYS: Record<VolumeRangeKey, number> = {
+  '7D': 7,
+  '30D': 30,
+  '1Y': 365,
+};
+
+/**
+ * Calculate daily USD volume for the last N days from successful requests.
+ * Groups by date (YYYY-MM-DD) and sums volume per day.
+ */
+function calculateDailyVolume(requests: RelayRequest[], days: number): DailyVolume[] {
+  const now = new Date();
+  const cutoffDate = new Date(now);
+  cutoffDate.setUTCDate(cutoffDate.getUTCDate() - (days - 1));
+  const cutoff = cutoffDate.toISOString().slice(0, 10);
+
+  const volumeByDate = new Map<string, number>();
+  const dates: string[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setUTCDate(d.getUTCDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    dates.push(dateStr);
+    volumeByDate.set(dateStr, 0);
+  }
+
+  requests.forEach(request => {
+    const dateStr = request.createdAt?.slice(0, 10);
+    if (!dateStr || dateStr < cutoff || !volumeByDate.has(dateStr)) return;
+
+    const volumeUsd = calculateVolumeUsd(request);
+    volumeByDate.set(dateStr, (volumeByDate.get(dateStr) ?? 0) + volumeUsd);
+  });
+
+  return dates.map(date => ({ date, volumeUsd: volumeByDate.get(date) ?? 0 }));
 }
 
 /**
@@ -467,6 +507,13 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
   // Calculate volume by chain (source/origin)
   const volumeByChain = calculateVolumeByChain(successfulRequests, chains);
 
+  // Calculate daily volume for sparkline (7D, 30D, 1Y)
+  const dailyVolumeByRange: DailyVolumeByRange = {
+    '7D': calculateDailyVolume(successfulRequests, VOLUME_RANGE_DAYS['7D']),
+    '30D': calculateDailyVolume(successfulRequests, VOLUME_RANGE_DAYS['30D']),
+    '1Y': calculateDailyVolume(successfulRequests, VOLUME_RANGE_DAYS['1Y']),
+  };
+
   // Calculate top chains
   const topChains = calculateTopChains(successfulRequests, chains, 'all');
   const topOriginChains = calculateTopChains(successfulRequests, chains, 'origin');
@@ -480,6 +527,7 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
   return {
     transactionCount,
     totalVolumeUsd,
+    dailyVolumeByRange,
     volumeByChain,
     topChains,
     topOriginChains,

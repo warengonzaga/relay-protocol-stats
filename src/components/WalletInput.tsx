@@ -68,7 +68,7 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
         } else {
           setError('Unable to resolve ENS name. Please check the name and try again.');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to resolve ENS name. Please try again.');
       }
       return;

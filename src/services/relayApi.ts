@@ -105,41 +105,94 @@ function calculateVolumeUsd(request: RelayRequest): number {
   }
 }
 
-const VOLUME_RANGE_DAYS: Record<VolumeRangeKey, number> = {
+const VOLUME_RANGE_DAYS: Record<Exclude<VolumeRangeKey, '1Y'>, number> = {
   '7D': 7,
   '30D': 30,
-  '1Y': 365,
 };
 
 /**
- * Calculate daily USD volume for the last N days from successful requests.
- * Groups by date (YYYY-MM-DD) and sums volume per day.
+ * Parse an ISO 8601 or date string to a UTC date key (YYYY-MM-DD).
+ * Uses the same reference (UTC) so filtering and chart ranges match regardless of user timezone.
+ * Keys are always in this format; lexicographic string comparison (e.g. dateStr < cutoff) is
+ * valid for chronological ordering only when both sides are YYYY-MM-DD (ISO 8601 date).
  */
-function calculateDailyVolume(requests: RelayRequest[], days: number): DailyVolume[] {
-  const now = new Date();
-  const cutoffDate = new Date(now);
-  cutoffDate.setUTCDate(cutoffDate.getUTCDate() - (days - 1));
-  const cutoff = cutoffDate.toISOString().slice(0, 10);
+function toUTCDateKey(createdAt: string | undefined): string | null {
+  if (!createdAt) return null;
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
+}
 
+/**
+ * Single pass: aggregate USD volume by date (YYYY-MM-DD, UTC) from successful requests.
+ * Uses UTC consistently so comparison with generated date ranges (also UTC) avoids off-by-one-day errors.
+ */
+function aggregateVolumeByDate(requests: RelayRequest[]): Map<string, number> {
   const volumeByDate = new Map<string, number>();
-  const dates: string[] = [];
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now);
-    d.setUTCDate(d.getUTCDate() - i);
-    const dateStr = d.toISOString().slice(0, 10);
-    dates.push(dateStr);
-    volumeByDate.set(dateStr, 0);
-  }
-
-  requests.forEach(request => {
-    const dateStr = request.createdAt?.slice(0, 10);
-    if (!dateStr || dateStr < cutoff || !volumeByDate.has(dateStr)) return;
-
+  for (const request of requests) {
+    const dateStr = toUTCDateKey(request.createdAt);
+    if (!dateStr) continue;
     const volumeUsd = calculateVolumeUsd(request);
     volumeByDate.set(dateStr, (volumeByDate.get(dateStr) ?? 0) + volumeUsd);
-  });
+  }
+  return volumeByDate;
+}
 
-  return dates.map(date => ({ date, volumeUsd: volumeByDate.get(date) ?? 0 }));
+/**
+ * Returns UTC date strings (YYYY-MM-DD) for the last 7 or 30 days (fixed count).
+ * All dates are derived from Date.UTC and toISOString() so range and aggregation use the same reference.
+ */
+function getDateRangeFixedDays(days: number): string[] {
+  const now = new Date();
+  const dates: string[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
+    dates.push(d.toISOString().slice(0, 10));
+  }
+  return dates;
+}
+
+/**
+ * Returns UTC date strings (YYYY-MM-DD) from one year ago through today using UTC date arithmetic.
+ * Handles leap years (365 or 366 days). Uses only UTC (Date.UTC, setUTCFullYear, setUTCDate, toISOString)
+ * so the range matches aggregateVolumeByDate (which keys by UTC date from createdAt).
+ */
+function getDateRangeOneYear(): string[] {
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  start.setUTCFullYear(start.getUTCFullYear() - 1);
+  const dates: string[] = [];
+  const cursor = new Date(start.getTime());
+  const endStr = now.toISOString().slice(0, 10);
+  while (cursor.getTime() <= now.getTime()) {
+    dates.push(cursor.toISOString().slice(0, 10));
+    if (dates[dates.length - 1] === endStr) break;
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return dates;
+}
+
+/**
+ * Build daily volume series for a given list of dates from a pre-aggregated map.
+ */
+function buildDailyVolumeSeries(
+  volumeByDate: Map<string, number>,
+  dateStrings: string[]
+): DailyVolume[] {
+  return dateStrings.map(date => ({ date, volumeUsd: volumeByDate.get(date) ?? 0 }));
+}
+
+/**
+ * Compute daily volume for all sparkline ranges (7D, 30D, 1Y) from a single aggregation pass.
+ * 1Y uses calendar date arithmetic for leap-year correctness.
+ */
+function calculateDailyVolumeByRange(requests: RelayRequest[]): DailyVolumeByRange {
+  const volumeByDate = aggregateVolumeByDate(requests);
+  return {
+    '7D': buildDailyVolumeSeries(volumeByDate, getDateRangeFixedDays(VOLUME_RANGE_DAYS['7D'])),
+    '30D': buildDailyVolumeSeries(volumeByDate, getDateRangeFixedDays(VOLUME_RANGE_DAYS['30D'])),
+    '1Y': buildDailyVolumeSeries(volumeByDate, getDateRangeOneYear()),
+  };
 }
 
 /**
@@ -507,12 +560,8 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
   // Calculate volume by chain (source/origin)
   const volumeByChain = calculateVolumeByChain(successfulRequests, chains);
 
-  // Calculate daily volume for sparkline (7D, 30D, 1Y)
-  const dailyVolumeByRange: DailyVolumeByRange = {
-    '7D': calculateDailyVolume(successfulRequests, VOLUME_RANGE_DAYS['7D']),
-    '30D': calculateDailyVolume(successfulRequests, VOLUME_RANGE_DAYS['30D']),
-    '1Y': calculateDailyVolume(successfulRequests, VOLUME_RANGE_DAYS['1Y']),
-  };
+  // Calculate daily volume for sparkline (single pass, then slice by range; 1Y uses date arithmetic)
+  const dailyVolumeByRange = calculateDailyVolumeByRange(successfulRequests);
 
   // Calculate top chains
   const topChains = calculateTopChains(successfulRequests, chains, 'all');

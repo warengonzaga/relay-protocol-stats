@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
-import { cn } from '@/lib/utils';
 
 interface StatsDisplayProps {
   stats: WalletStats | null;
@@ -90,21 +89,23 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
               <p className="text-xs text-muted-foreground">USD transferred</p>
               {stats.dailyVolumeByRange && (
                 <>
-                  <div className="mt-3 flex gap-1">
+                  <div
+                    role="group"
+                    aria-label="Time range selector"
+                    className="mt-3 flex gap-1"
+                  >
                     {VOLUME_RANGES.map(range => (
-                      <button
+                      <Button
                         key={range}
                         type="button"
+                        variant={volumeRange === range ? 'default' : 'outline'}
+                        size="sm"
                         onClick={() => setVolumeRange(range)}
-                        className={cn(
-                          'rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                          volumeRange === range
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                        )}
+                        aria-pressed={volumeRange === range}
+                        className="min-w-0 px-2 text-xs"
                       >
                         {range}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                   <div className="mt-2 h-12 w-full">

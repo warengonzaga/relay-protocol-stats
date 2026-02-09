@@ -59,7 +59,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {/* Total Transactions Card */}
         <Card>
           <CardHeader className="pb-2 sm:pb-3">
@@ -73,8 +73,25 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
           </CardContent>
         </Card>
 
-        {/* Total Volume Card */}
+        {/* Success Rate Card */}
         <Card>
+          <CardHeader className="pb-2 sm:pb-3">
+            <CardDescription className="text-sm">Success Rate</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              <p className="text-2xl sm:text-3xl font-bold">
+                {Math.round(stats.successRate)}%
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {stats.transactionCount} success, {stats.failedRequests} failed, {stats.refundedRequests} refunded
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Volume Card */}
+        <Card className="sm:col-span-2">
           <CardHeader className="pb-2 sm:pb-3">
             <CardDescription className="text-sm">Total Volume</CardDescription>
           </CardHeader>
@@ -150,23 +167,6 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
                   </div>
                 </>
               )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Success Rate Card */}
-        <Card>
-          <CardHeader className="pb-2 sm:pb-3">
-            <CardDescription className="text-sm">Success Rate</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              <p className="text-2xl sm:text-3xl font-bold">
-                {Math.round(stats.successRate)}%
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {stats.transactionCount} success, {stats.failedRequests} failed, {stats.refundedRequests} refunded
-              </p>
             </div>
           </CardContent>
         </Card>

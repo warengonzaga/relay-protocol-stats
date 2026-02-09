@@ -1,7 +1,9 @@
-import type { WalletStats } from '@/types/relay';
+import { useState } from 'react';
+import type { WalletStats, VolumeRangeKey } from '@/types/relay';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 
 interface StatsDisplayProps {
   stats: WalletStats | null;
@@ -10,7 +12,10 @@ interface StatsDisplayProps {
   isRefreshing?: boolean;
 }
 
+const VOLUME_RANGES: VolumeRangeKey[] = ['7D', '30D', '1Y'];
+
 export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = false }: StatsDisplayProps) {
+  const [volumeRange, setVolumeRange] = useState<VolumeRangeKey>('7D');
   if (error) {
     return (
       <Card className="w-full mx-auto mt-6 sm:mt-8 border-destructive">
@@ -54,7 +59,7 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {/* Total Transactions Card */}
         <Card>
           <CardHeader className="pb-2 sm:pb-3">
@@ -64,24 +69,6 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
             <div className="space-y-1">
               <p className="text-2xl sm:text-3xl font-bold">{stats.totalRequests.toLocaleString()}</p>
               <p className="text-xs text-muted-foreground">{stats.transactionCount} successful</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Total Volume Card */}
-        <Card>
-          <CardHeader className="pb-2 sm:pb-3">
-            <CardDescription className="text-sm">Total Volume</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              <p className="text-2xl sm:text-3xl font-bold">
-                ${stats.totalVolumeUsd.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </p>
-              <p className="text-xs text-muted-foreground">USD transferred</p>
             </div>
           </CardContent>
         </Card>
@@ -99,6 +86,87 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
               <p className="text-xs text-muted-foreground">
                 {stats.transactionCount} success, {stats.failedRequests} failed, {stats.refundedRequests} refunded
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Volume Card */}
+        <Card className="sm:col-span-2">
+          <CardHeader className="pb-2 sm:pb-3">
+            <CardDescription className="text-sm">Total Volume</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              <p className="text-2xl sm:text-3xl font-bold">
+                ${stats.totalVolumeUsd.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+              <p className="text-xs text-muted-foreground">USD transferred</p>
+              {stats.dailyVolumeByRange && (
+                <>
+                  <div
+                    role="group"
+                    aria-label="Time range selector"
+                    className="mt-3 flex gap-1"
+                  >
+                    {VOLUME_RANGES.map(range => (
+                      <Button
+                        key={range}
+                        type="button"
+                        variant={volumeRange === range ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setVolumeRange(range)}
+                        aria-pressed={volumeRange === range}
+                        className="min-w-0 px-2 text-xs"
+                      >
+                        {range}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="mt-2 h-12 w-full">
+                    {stats.dailyVolumeByRange[volumeRange]?.some(d => d.volumeUsd > 0) ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={stats.dailyVolumeByRange[volumeRange]}
+                          margin={{ top: 2, right: 2, bottom: 2, left: 2 }}
+                        >
+                          <XAxis dataKey="date" hide />
+                          <YAxis hide />
+                          <Tooltip
+                            content={({ active, payload }) =>
+                              active && payload?.[0] ? (
+                                <div className="rounded-md border border-border bg-card px-2 py-1.5 text-xs shadow-sm">
+                                  <p className="font-medium">
+                                    ${(payload[0].value as number).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </p>
+                                  <p className="text-muted-foreground">{payload[0].payload.date}</p>
+                                </div>
+                              ) : null
+                            }
+                            cursor={{ stroke: 'hsl(var(--primary) / 0.5)', strokeWidth: 1 }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="volumeUsd"
+                            stroke="hsl(var(--primary))"
+                            strokeWidth={1.5}
+                            dot={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex h-full items-center justify-center rounded-md border border-dashed border-border bg-muted/30">
+                        <p className="text-xs text-muted-foreground">No activity in this period</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

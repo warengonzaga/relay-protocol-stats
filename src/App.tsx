@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import WalletInput from '@/components/WalletInput';
 import StatsDisplay from '@/components/StatsDisplay';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -116,6 +117,12 @@ function App() {
           <p className="text-muted-foreground text-sm sm:text-base px-4">
             Analyze your cross-chain transaction history
           </p>
+          <Link
+            to="/leaderboard"
+            className="inline-block text-sm font-medium text-primary hover:underline"
+          >
+            Global Leaderboard →
+          </Link>
         </header>
 
         <WalletInput

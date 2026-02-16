@@ -23,7 +23,7 @@ cron.schedule('*/10 * * * *', async () => {
   try {
     console.log('[cron] Starting sync...');
     const result = await runSync();
-    console.log(`[cron] Sync done: ${result.pagesProcessed} pages, ${result.requestsProcessed} requests, ${result.walletsUpserted} upserts`);
+    console.log(`[cron] Sync done: ${result.pagesProcessed} pages, ${result.requestsProcessed} requests, ${result.walletsUpserted} upserts${result.stoppedEarly ? ' (stopped early, will resume)' : ''}`);
   } catch (err) {
     console.error('[cron] Sync error:', err);
   } finally {
@@ -57,7 +57,7 @@ console.log('[cron] Scheduler started. Sync every 10 min, snapshot every hour at
     console.log('[cron] Initial sync...');
     syncRunning = true;
     const syncResult = await runSync();
-    console.log(`[cron] Initial sync done: ${syncResult.pagesProcessed} pages, ${syncResult.walletsUpserted} upserts`);
+    console.log(`[cron] Initial sync done: ${syncResult.pagesProcessed} pages, ${syncResult.walletsUpserted} upserts${syncResult.stoppedEarly ? ' (stopped early, will resume)' : ''}`);
     syncRunning = false;
 
     console.log('[cron] Initial snapshot...');

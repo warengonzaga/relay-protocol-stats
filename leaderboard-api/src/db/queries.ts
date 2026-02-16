@@ -53,22 +53,49 @@ export async function upsertWalletsBatch(db: Pool, rows: WalletUpsertRow[]): Pro
 // ── Snapshot: top 100k ──────────────────────────────────────────────
 
 export async function refreshSnapshot(db: Pool): Promise<number> {
-  await db.query('TRUNCATE leaderboard_top_100k');
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
 
-  const res = await db.query(`
-    INSERT INTO leaderboard_top_100k (rank, wallet_address, total_volume_usd, total_tx, updated_at)
-    SELECT
-      RANK() OVER (ORDER BY total_volume_usd DESC)::integer AS rank,
-      wallet_address,
-      total_volume_usd,
-      total_tx,
-      now()
-    FROM wallet_volume
-    ORDER BY total_volume_usd DESC
-    LIMIT 100000
-  `);
+    await client.query('DROP TABLE IF EXISTS leaderboard_top_100k_staging');
+    await client.query(`
+      CREATE TABLE leaderboard_top_100k_staging (
+        rank INTEGER NOT NULL,
+        wallet_address TEXT PRIMARY KEY,
+        total_volume_usd NUMERIC(24, 4) NOT NULL,
+        total_tx INTEGER NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `);
 
-  return res.rowCount ?? 0;
+    const res = await client.query(`
+      INSERT INTO leaderboard_top_100k_staging (rank, wallet_address, total_volume_usd, total_tx, updated_at)
+      SELECT
+        RANK() OVER (ORDER BY total_volume_usd DESC)::integer AS rank,
+        wallet_address,
+        total_volume_usd,
+        total_tx,
+        now()
+      FROM wallet_volume
+      ORDER BY total_volume_usd DESC
+      LIMIT 100000
+    `);
+
+    await client.query('CREATE INDEX idx_staging_rank ON leaderboard_top_100k_staging (rank)');
+
+    await client.query('DROP TABLE IF EXISTS leaderboard_top_100k_old');
+    await client.query('ALTER TABLE leaderboard_top_100k RENAME TO leaderboard_top_100k_old');
+    await client.query('ALTER TABLE leaderboard_top_100k_staging RENAME TO leaderboard_top_100k');
+    await client.query('DROP TABLE IF EXISTS leaderboard_top_100k_old');
+
+    await client.query('COMMIT');
+    return res.rowCount ?? 0;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // ── Leaderboard reads ───────────────────────────────────────────────

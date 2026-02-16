@@ -10,10 +10,14 @@ interface WalletRowProps {
 export default function WalletRow({ entry }: WalletRowProps) {
   const [copied, setCopied] = useState(false);
 
-  const copy = () => {
-    navigator.clipboard.writeText(entry.wallet_address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(entry.wallet_address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard write failed (e.g. permissions denied), silently ignore
+    }
   };
 
   return (

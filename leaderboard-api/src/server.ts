@@ -5,7 +5,8 @@ import type { CorsOptions } from 'cors';
 import leaderboardRoutes from './routes/leaderboard.js';
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
+const parsed = parseInt(process.env.PORT ?? '', 10);
+const PORT = Number.isNaN(parsed) ? 3001 : parsed;
 
 const allowedOrigins: string[] = (process.env.CORS_ALLOWED_ORIGINS ?? '')
   .split(',')

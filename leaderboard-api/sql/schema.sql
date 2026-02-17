@@ -28,6 +28,7 @@ CREATE INDEX IF NOT EXISTS idx_leaderboard_rank
 CREATE TABLE IF NOT EXISTS relay_sync_state (
   id INTEGER PRIMARY KEY DEFAULT 1,
   last_processed_timestamp BIGINT NOT NULL DEFAULT 0,
+  last_continuation TEXT,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

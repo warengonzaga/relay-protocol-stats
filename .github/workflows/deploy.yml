@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
           version: 10
 
@@ -38,6 +38,8 @@ jobs:
 
       - name: Build
         run: pnpm run build
+        env:
+          VITE_LEADERBOARD_API: ${{ secrets.VITE_LEADERBOARD_API }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

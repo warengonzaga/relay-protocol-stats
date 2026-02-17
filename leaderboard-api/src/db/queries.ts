@@ -2,19 +2,34 @@ import type { Pool } from 'pg';
 
 // ── Sync state ──────────────────────────────────────────────────────
 
-export async function getLastProcessedTimestamp(db: Pool): Promise<bigint> {
-  const res = await db.query<{ last_processed_timestamp: string }>(
-    'SELECT last_processed_timestamp FROM relay_sync_state WHERE id = 1'
+export interface SyncState {
+  lastProcessedTimestamp: bigint;
+  lastContinuation: string | null;
+}
+
+export async function getSyncState(db: Pool): Promise<SyncState> {
+  const res = await db.query<{ last_processed_timestamp: string; last_continuation: string | null }>(
+    'SELECT last_processed_timestamp, last_continuation FROM relay_sync_state WHERE id = 1'
   );
   if (res.rows.length === 0) {
     throw new Error('relay_sync_state row id=1 missing; run db:migrate');
   }
-  return BigInt(res.rows[0].last_processed_timestamp);
+  return {
+    lastProcessedTimestamp: BigInt(res.rows[0].last_processed_timestamp),
+    lastContinuation: res.rows[0].last_continuation,
+  };
 }
 
-export async function setLastProcessedTimestamp(db: Pool, ts: bigint): Promise<void> {
+export async function saveSyncProgress(db: Pool, continuation: string | null): Promise<void> {
   await db.query(
-    'UPDATE relay_sync_state SET last_processed_timestamp = $1, updated_at = now() WHERE id = 1',
+    'UPDATE relay_sync_state SET last_continuation = $1, updated_at = now() WHERE id = 1',
+    [continuation]
+  );
+}
+
+export async function completeSyncRun(db: Pool, ts: bigint): Promise<void> {
+  await db.query(
+    'UPDATE relay_sync_state SET last_processed_timestamp = $1, last_continuation = NULL, updated_at = now() WHERE id = 1',
     [ts.toString()]
   );
 }
@@ -57,19 +72,10 @@ export async function refreshSnapshot(db: Pool): Promise<number> {
   try {
     await client.query('BEGIN');
 
-    await client.query('DROP TABLE IF EXISTS leaderboard_top_100k_staging');
-    await client.query(`
-      CREATE TABLE leaderboard_top_100k_staging (
-        rank INTEGER NOT NULL,
-        wallet_address TEXT PRIMARY KEY,
-        total_volume_usd NUMERIC(24, 4) NOT NULL,
-        total_tx INTEGER NOT NULL DEFAULT 0,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-      )
-    `);
+    await client.query('TRUNCATE leaderboard_top_100k');
 
     const res = await client.query(`
-      INSERT INTO leaderboard_top_100k_staging (rank, wallet_address, total_volume_usd, total_tx, updated_at)
+      INSERT INTO leaderboard_top_100k (rank, wallet_address, total_volume_usd, total_tx, updated_at)
       SELECT
         RANK() OVER (ORDER BY total_volume_usd DESC)::integer AS rank,
         wallet_address,
@@ -80,13 +86,6 @@ export async function refreshSnapshot(db: Pool): Promise<number> {
       ORDER BY total_volume_usd DESC
       LIMIT 100000
     `);
-
-    await client.query('CREATE INDEX idx_staging_rank ON leaderboard_top_100k_staging (rank)');
-
-    await client.query('DROP TABLE IF EXISTS leaderboard_top_100k_old');
-    await client.query('ALTER TABLE leaderboard_top_100k RENAME TO leaderboard_top_100k_old');
-    await client.query('ALTER TABLE leaderboard_top_100k_staging RENAME TO leaderboard_top_100k');
-    await client.query('DROP TABLE IF EXISTS leaderboard_top_100k_old');
 
     await client.query('COMMIT');
     return res.rowCount ?? 0;

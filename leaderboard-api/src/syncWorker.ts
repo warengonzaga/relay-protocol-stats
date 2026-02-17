@@ -10,9 +10,9 @@
 import { fetchRequestsPage, delay, getVolumeUsd, type RelayRequest } from './relayClient.js';
 import { getDb } from './db/client.js';
 import {
-  getLastProcessedTimestamp,
-  setLastProcessedTimestamp,
-  upsertWalletsBatch,
+  getSyncState,
+  saveSyncProgress,
+  completeSyncRun,
   type WalletUpsertRow,
 } from './db/queries.js';
 
@@ -69,14 +69,20 @@ export interface SyncResult {
 
 export async function runSync(): Promise<SyncResult> {
   const db = getDb();
-  const lastTs = await withRetry(() => getLastProcessedTimestamp(db));
+  const state = await withRetry(() => getSyncState(db));
+  const lastTs = state.lastProcessedTimestamp;
 
   let pagesProcessed = 0;
   let requestsProcessed = 0;
   let walletsUpserted = 0;
-  let continuation: string | null = null;
+  let continuation: string | null = state.lastContinuation;
+  let maxCreatedAtMs = 0;
   let consecutiveEmptyPages = 0;
   let stoppedEarly = false;
+
+  if (continuation) {
+    console.log(`[sync] Resuming from saved continuation token.`);
+  }
 
   for (;;) {
     if (pagesProcessed >= MAX_PAGES_PER_RUN) {
@@ -88,7 +94,7 @@ export async function runSync(): Promise<SyncResult> {
     const page = await withRetry(() =>
       fetchRequestsPage({
         continuation: continuation ?? undefined,
-        startTimestamp: lastTs > 0n ? lastTs : undefined,
+        startTimestamp: !continuation && lastTs > 0n ? lastTs : undefined,
       })
     );
 
@@ -106,15 +112,14 @@ export async function runSync(): Promise<SyncResult> {
 
     consecutiveEmptyPages = 0;
     requestsProcessed += page.requests.length;
-    const pageMaxTs = page.maxCreatedAtMs > 0 ? BigInt(page.maxCreatedAtMs) : 0n;
 
     const batch = aggregatePage(page.requests);
 
-    const client = await db.connect();
-    try {
-      await client.query('BEGIN');
+    if (batch.length > 0) {
+      const client = await db.connect();
+      try {
+        await client.query('BEGIN');
 
-      if (batch.length > 0) {
         const values: unknown[] = [];
         const placeholders: string[] = [];
         let idx = 0;
@@ -133,30 +138,40 @@ export async function runSync(): Promise<SyncResult> {
           values
         );
         walletsUpserted += batch.length;
-      }
 
-      if (pageMaxTs > 0n) {
-        await client.query(
-          'UPDATE relay_sync_state SET last_processed_timestamp = $1, updated_at = now() WHERE id = 1',
-          [pageMaxTs.toString()]
-        );
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
       }
-
-      await client.query('COMMIT');
-    } catch (err) {
-      await client.query('ROLLBACK');
-      throw err;
-    } finally {
-      client.release();
     }
 
+    if (page.maxCreatedAtMs > maxCreatedAtMs) maxCreatedAtMs = page.maxCreatedAtMs;
+
     pagesProcessed++;
+    continuation = page.continuation;
+
+    // Save continuation token every 50 pages so we can resume after crashes
+    if (pagesProcessed % 50 === 0) {
+      await withRetry(() => saveSyncProgress(db, continuation));
+    }
+
     console.log(`  Page ${pagesProcessed}: ${requestsProcessed} requests, ${walletsUpserted} wallet upserts`);
 
     if (!page.continuation) break;
-    continuation = page.continuation;
     await delay();
   }
 
+  // Pagination exhausted: advance timestamp and clear continuation
+  if (!stoppedEarly) {
+    const newTs = maxCreatedAtMs > 0 ? BigInt(maxCreatedAtMs) : lastTs;
+    await withRetry(() => completeSyncRun(db, newTs > lastTs ? newTs : lastTs));
+    return { pagesProcessed, requestsProcessed, walletsUpserted, lastTimestamp: newTs, stoppedEarly };
+  }
+
+  // Stopped early (MAX_PAGES): save continuation for next run
+  await withRetry(() => saveSyncProgress(db, continuation));
   return { pagesProcessed, requestsProcessed, walletsUpserted, lastTimestamp: lastTs, stoppedEarly };
 }

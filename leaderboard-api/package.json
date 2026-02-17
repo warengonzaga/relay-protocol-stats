@@ -7,12 +7,6 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
-    "sync": "node dist/sync.js",
-    "sync:dev": "tsx src/sync.ts",
-    "snapshot": "node dist/snapshot.js",
-    "snapshot:dev": "tsx src/snapshot.ts",
-    "cron": "node dist/cron.js",
-    "cron:dev": "tsx src/cron.ts",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:up": "docker compose up -d"
   },

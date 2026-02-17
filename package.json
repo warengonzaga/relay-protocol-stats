@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:all": "concurrently -n frontend,api -c blue,green \"pnpm run dev\" \"pnpm --filter ./leaderboard-api run dev\"",
+    "dev:all": "concurrently -n frontend,api,cron -c blue,green,magenta \"pnpm run dev\" \"pnpm --filter ./leaderboard-api run dev\" \"pnpm --filter ./leaderboard-api run cron:dev\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

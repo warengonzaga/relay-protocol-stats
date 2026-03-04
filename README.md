@@ -1,214 +1,127 @@
-# Relay Protocol Dashboard
+# Relay Protocol Stats
 
-A modern web-based dashboard for analyzing Relay Protocol cross-chain transaction history. Supports both wallet addresses and ENS domains (.eth) for easy lookup of your transaction statistics.
+![GitHub Repo Banner](https://ghrb.waren.build/banner?header=Relay+Protocol+Stats&subheader=Analyze+your+cross-chain+transaction+history.&bg=8B5CF6&color=FFFFFF&subheadercolor=E9D5FF&headerfont=Inter&subheaderfont=Inter&watermarkpos=bottom-right)
 
-## Features
+<!-- Created with GitHub Repo Banner by Waren Gonzaga: https://ghrb.waren.build -->
 
-### Analytics & Statistics
-- **Transaction Count**: View total number of successful cross-chain transactions
-- **Total Volume**: See the total USD value of tokens transferred
-- **Success Rate Analytics**: Track transaction success rate with failure and refund metrics (displayed separately)
-- **Top Chains Analytics**: See your most used chains:
-  - Favorite Chain (overall most used)
-  - Top Origin Chain (most common source chain)
-  - Top Destination Chain (most common target chain)
+[![Bun](https://img.shields.io/badge/bun-runtime-f9f1e1?logo=bun&logoColor=000)](https://bun.sh)
+[![Biome](https://img.shields.io/badge/biome-linter-60a5fa?logo=biome&logoColor=fff)](https://biomejs.dev)
+[![Deploy](https://github.com/warengonzaga/relay-protocol-stats/actions/workflows/deploy.yml/badge.svg)](https://github.com/warengonzaga/relay-protocol-stats/actions/workflows/deploy.yml)
 
-### User Experience
-- **ENS Support**: Use .eth domains - automatic resolution to wallet addresses powered by viem
-- **Modern UI**: Beautiful gradients, smooth animations, and responsive design
-- **Enhanced Loading**:
-  - Animated progress bar with shimmer effect
-  - Rotating creative loading messages
-  - Display wallet address during analysis
-  - Compact loading card that replaces input form
-- **Wallet Privacy**: Address truncation by default with toggle to show/hide full address
-- **Pixel Avatar**: Unique pixel-based avatar for each wallet
-- **Blockscan Integration**: Clickable wallet address linking to Blockscan with UTM tracking
-- **Shareable URLs**: Share wallet analysis with direct URL links
-- **Fast & Simple**: Just paste your wallet address or ENS name - no wallet connection required
-- **Automatic Pagination**: Fetches all transaction history automatically
+A web dashboard for analyzing your [Relay Protocol](https://relay.link) cross-chain transaction history. Paste a wallet address or ENS name — no wallet connection required.
 
-## Tech Stack
+## ✨ Features
 
-- **React 19** with TypeScript
-- **Vite** for fast development and builds
-- **Tailwind CSS** for modern, responsive styling
-- **Axios** for API calls
-- **Viem** for ENS resolution
-- **Relay API** for transaction data
+- **Wallet Analytics** — transaction count, total volume (USD), success rate, failed & refunded counts
+- **Top Chains** — favorite chain, top origin, top destination
+- **Leaderboard** — Supabase-powered ranking synced every 6 hours via GitHub Actions
+- **ENS Support** — `.eth` domain resolution powered by viem
+- **Shareable URLs** — direct links to any wallet's stats
+- **Pixel Avatars** — unique avatar per wallet with Blockscan integration
 
-## Getting Started
+## 🛠️ Tech Stack
+
+| Category | Tools |
+|---|---|
+| Frontend | React 19, TypeScript 5.9, Vite 7 |
+| Styling | Tailwind CSS 3.4, shadcn/ui |
+| Data | Supabase, Relay API, Axios, Viem |
+| Tooling | Bun, Biome |
+| CI/CD | GitHub Actions, GitHub Pages |
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js (v18 or higher)
-- pnpm package manager
+- [Bun](https://bun.sh) (v1.1+)
 
-### Installation
+### Setup
 
 ```bash
-# Install dependencies
-pnpm install
+bun install
+cp .env.example .env  # configure your Supabase keys
 ```
 
 ### Development
 
 ```bash
-# Start development server
-pnpm dev
+bun dev       # http://localhost:5173
+bun run build # production build
+bun preview   # preview production build
 ```
 
-The app will be available at `http://localhost:5173`
-
-### Build
+### Linting
 
 ```bash
-# Build for production
-pnpm build
+bun run lint      # check
+bun run lint:fix  # auto-fix
+bun run format    # format
 ```
 
-### Preview Production Build
+## ⚙️ Environment Variables
 
-```bash
-# Preview production build locally
-pnpm preview
-```
+See [`.env.example`](.env.example) for all variables.
 
-## Leaderboard Backend Setup (Supabase)
+| Variable | Context | Description |
+|---|---|---|
+| `VITE_SUPABASE_URL` | Frontend | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Frontend | Supabase anonymous key (safe to expose) |
+| `SUPABASE_URL` | Sync script | Supabase project URL |
+| `SUPABASE_SERVICE_KEY` | Sync script | Supabase service role key (**keep secret**) |
+| `RELAY_API_KEY` | Sync script | Optional — higher Relay API rate limits |
 
-The leaderboard UI reads data from a separate API service in `leaderboard-api/`.
+## 🗄️ Supabase Setup
 
-### Backend Environment
+1. Create a Supabase project
+2. Run [`supabase/schema.sql`](supabase/schema.sql) to create tables and RLS policies
+3. Run [`supabase/functions.sql`](supabase/functions.sql) to create the upsert function
+4. Add the environment variables above to your `.env` and GitHub repository secrets
 
-Set these variables for the API/cron deployment (e.g. Render):
+The leaderboard sync runs automatically via the [sync workflow](.github/workflows/sync-leaderboard.yml) every 6 hours. First run seeds the cursor — data collection starts from that point forward (no historical backfill).
 
-- `DATABASE_URL` - Supabase Postgres connection string
-- `RELAY_API_KEY` - Relay API key (recommended)
-- `CORS_ALLOWED_ORIGINS` - comma-separated allowed frontend origins
-- `PORT` - API port (Render uses `10000` by default)
-
-Example `DATABASE_URL`:
-
-```bash
-postgresql://postgres:<password>@db.<project-ref>.supabase.co:5432/postgres?sslmode=require
-```
-
-### Frontend Environment
-
-Set `VITE_LEADERBOARD_API` to your public API URL:
-
-```bash
-VITE_LEADERBOARD_API=https://relay-protocol-stats.onrender.com
-```
-
-## Usage
-
-1. Open the dashboard in your browser
-2. Enter your wallet address (Ethereum/Solana) or ENS domain (e.g., vitalik.eth)
-3. Click "Analyze" or press Enter
-4. Watch the animated progress as your transactions are analyzed
-5. View your transaction statistics:
-   - Total successful transactions
-   - Total volume in USD
-   - Failed and refunded transaction counts
-   - Favorite chain (most used overall)
-   - Top origin chain (most common source)
-   - Top destination chain (most common target)
-   - Unique pixel avatar for your wallet
-6. Share your results using the Share button to copy a direct link
-
-## How It Works
-
-The dashboard provides a seamless analysis experience:
-
-1. **Input Processing**:
-   - Detects if input is an ENS domain (.eth)
-   - Resolves ENS to wallet address using viem and public Ethereum RPC
-   - Validates wallet address format
-
-2. **Data Fetching**:
-   - Fetches all transaction requests for the wallet address via Relay Protocol API
-   - Automatically handles pagination (50 results per request)
-   - Fetches chain metadata for displaying chain icons and names
-   - Shows real-time progress with animated loading states
-
-3. **Statistics Calculation**:
-   - **Transaction Count**: Number of successful cross-chain transactions
-   - **Total Volume**: Sum of USD values from `metadata.currencyIn.amountUsd` field
-   - **Failed & Refunded**: Separate counts for failed and refunded transactions
-   - **Top Chains**: Analyzes origin and destination chains to determine most frequently used chains
-
-4. **Visual Presentation**:
-   - Generates unique pixel avatar for the wallet
-   - Displays statistics with modern gradients and animations
-   - Provides share functionality for easy result sharing
-
-### API Integration
-
-- **Requests Endpoint**: `GET https://api.relay.link/requests/v2`
-  - Pagination: Automatically handles pagination (50 results per request)
-  - Filtering: Filters by wallet address and categorizes by transaction status
-- **Chains Endpoint**: `GET https://api.relay.link/chains`
-  - Fetches chain metadata including names and icons
-  - Used to display chain information in the UI
-- **ENS Resolution**: Uses viem with public Ethereum RPC to resolve .eth domains
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 relay-protocol-stats/
 ├── src/
-│   ├── components/
-│   │   ├── WalletInput.tsx       # Input field with ENS support
-│   │   ├── StatsDisplay.tsx      # Statistics display with pixel avatar
-│   │   ├── LoadingSpinner.tsx    # Animated loading with progress bar
-│   │   └── Footer.tsx            # Compact footer with links
-│   ├── services/
-│   │   └── relayApi.ts           # API integration with pagination
-│   ├── types/
-│   │   └── relay.ts              # TypeScript type definitions
-│   ├── App.tsx                   # Main application component
-│   ├── main.tsx                  # Entry point
-│   └── index.css                 # Global styles with animations
-├── package.json
-├── vite.config.ts
-├── tsconfig.json
-└── tailwind.config.js
+│   ├── components/     # UI components (WalletInput, StatsDisplay, Leaderboard, etc.)
+│   ├── services/       # API clients (relayApi, leaderboardApi, ens)
+│   ├── pages/          # Route pages (LeaderboardPage)
+│   ├── lib/            # Utilities (supabase client, helpers)
+│   ├── types/          # TypeScript type definitions
+│   ├── App.tsx         # Main app with routing
+│   └── index.css       # Global styles and animations
+├── scripts/            # Sync scripts (sync-leaderboard.ts)
+├── supabase/           # Database schema and functions
+├── .github/workflows/  # CI/CD (deploy, sync)
+├── biome.json          # Linter/formatter config
+└── package.json
 ```
 
-## Changelog
+## 🐛 Issues
 
-### Version 1.1.0
-- Added ENS domain support (.eth resolution)
-- Implemented modern UI with gradients and smooth animations
-- Enhanced loading experience with animated progress bar and shimmer effects
-- Added rotating creative loading messages
-- Display wallet address during analysis
-- Separate failed and refunded transaction counts
-- Added pixel-based avatar generation for wallets
-- Improved mobile responsiveness across all components
-- Compact and optimized footer design
+Found a bug? [Open an issue](https://github.com/warengonzaga/relay-protocol-stats/issues/new/choose). Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-### Version 1.0.0
-- Initial release with core analytics features
-- Transaction count and volume statistics
-- Top chains analytics
-- Wallet privacy controls
-- Blockscan integration
-- Shareable URLs
+## 🙏 Sponsor
 
-## Future Enhancements
+Like this project? Leave a ⭐
 
-Potential features to add:
+Want to support my work? [Become a sponsor](https://github.com/sponsors/warengonzaga) 💖 or [buy me a coffee](https://buymeacoffee.com/warengonzaga) ☕
 
-- Most used tokens (based on currency field)
-- Transaction history timeline
-- Percentage-based success/failure rate visualization
-- Average transaction size
-- Export data to CSV
-- Interactive charts and visualizations
-- Multi-wallet comparison
+## 📋 Code of Conduct
 
-## License
+Read the project's [code of conduct](CODE_OF_CONDUCT.md).
 
-MIT
+## 📃 License
+
+This project is licensed under [MIT License](LICENSE).
+
+## 📝 Author
+
+This project is created by **[Waren Gonzaga](https://github.com/warengonzaga)**, with the help of awesome [contributors](https://github.com/warengonzaga/relay-protocol-stats/graphs/contributors).
+
+[![contributors](https://contrib.rocks/image?repo=warengonzaga/relay-protocol-stats)](https://github.com/warengonzaga/relay-protocol-stats/graphs/contributors)
+
+---
+
+💻💖☕ by [Waren Gonzaga](https://warengonzaga.com) | [YHWH](https://www.youtube.com/watch?v=VOZbswniA-g) 🙏

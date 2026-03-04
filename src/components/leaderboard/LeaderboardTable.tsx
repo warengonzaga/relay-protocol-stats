@@ -44,7 +44,8 @@ export default function LeaderboardTable({ entries, loading }: LeaderboardTableP
           </thead>
           <tbody>
             {loading
-              ? Array.from({ length: 10 }).map((_, i) => <SkeletonRow key={`skeleton-${i}`} />)
+              ? // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders are static and stateless
+                Array.from({ length: 10 }).map((_, i) => <SkeletonRow key={`skeleton-${i}`} />)
               : entries.map((entry) => <WalletRow key={entry.wallet_address} entry={entry} />)}
           </tbody>
         </table>

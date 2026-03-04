@@ -1,13 +1,14 @@
-import { useState, useRef, useEffect } from 'react';
-import WalletInput from '@/components/WalletInput';
-import StatsDisplay from '@/components/StatsDisplay';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import FAQ from '@/components/FAQ';
+import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import RelayLogo from '@/components/RelayLogo';
-import Footer from '@/components/Footer';
-import { analyzeWalletStats, isValidEthereumAddress } from '@/services/relayApi';
+import StatsDisplay from '@/components/StatsDisplay';
+import WalletInput from '@/components/WalletInput';
 import { resolveENS } from '@/services/ens';
+import { analyzeWalletStats, isValidEthereumAddress } from '@/services/relayApi';
 import type { WalletStats } from '@/types/relay';
-import FAQ from '@/components/FAQ';
 
 function App() {
   const [stats, setStats] = useState<WalletStats | null>(null);
@@ -19,16 +20,6 @@ function App() {
   const [loadingAddress, setLoadingAddress] = useState<string>('');
   const currentRequestIdRef = useRef(0);
 
-  // Read wallet address from URL parameter on mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const walletParam = urlParams.get('wallet');
-
-    if (walletParam && isValidEthereumAddress(walletParam)) {
-      handleAnalyze(walletParam);
-    }
-  }, []);
-
   const handleAnalyze = async (address: string) => {
     setIsLoading(true);
     setLoadingAddress(address);
@@ -38,10 +29,7 @@ function App() {
 
     try {
       // Resolve ENS name in parallel with wallet stats
-      const [walletStats, resolvedEns] = await Promise.all([
-        analyzeWalletStats(address),
-        resolveENS(address),
-      ]);
+      const [walletStats, resolvedEns] = await Promise.all([analyzeWalletStats(address), resolveENS(address)]);
 
       setStats(walletStats);
       setAnalyzedAddress(address);
@@ -60,6 +48,16 @@ function App() {
       setLoadingAddress('');
     }
   };
+
+  // Read wallet address from URL parameter on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const walletParam = urlParams.get('wallet');
+
+    if (walletParam && isValidEthereumAddress(walletParam)) {
+      handleAnalyze(walletParam);
+    }
+  }, []);
 
   const handleReset = () => {
     setStats(null);
@@ -116,6 +114,9 @@ function App() {
           <p className="text-muted-foreground text-sm sm:text-base px-4">
             Analyze your cross-chain transaction history
           </p>
+          <Link to="/leaderboard" className="inline-block text-sm font-medium text-primary hover:underline">
+            Global Leaderboard →
+          </Link>
         </header>
 
         <WalletInput
@@ -128,7 +129,9 @@ function App() {
 
         {isLoading && <LoadingSpinner address={loadingAddress} />}
 
-        {!isLoading && <StatsDisplay stats={stats} error={error} onRefresh={handleRefresh} isRefreshing={isRefreshing} />}
+        {!isLoading && (
+          <StatsDisplay stats={stats} error={error} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+        )}
       </div>
 
       {!isLoading && !analyzedAddress && <FAQ />}

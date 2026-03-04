@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:all": "concurrently -n frontend,api,cron -c blue,green,magenta \"pnpm run dev\" \"pnpm --filter ./leaderboard-api run dev\" \"pnpm --filter ./leaderboard-api run cron:dev\"",
     "build": "tsc -b && vite build",
+    "sync:leaderboard": "tsx scripts/sync-leaderboard.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
+    "@supabase/supabase-js": "^2.98.0",
     "axios": "^1.13.5",
     "boring-avatars": "^2.0.4",
     "lucide-react": "^0.562.0",
@@ -30,7 +31,6 @@
     "autoprefixer": "^10.4.23",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "concurrently": "^9.2.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

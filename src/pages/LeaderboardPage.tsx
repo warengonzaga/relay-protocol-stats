@@ -74,7 +74,7 @@ export default function LeaderboardPage() {
               Global Relay Leaderboard
             </h1>
             <p className="mt-1 text-sm text-zinc-500">
-              Top {totalWallets.toLocaleString()} wallets ranked by all-time volume &middot; Updated hourly
+              {totalWallets.toLocaleString()} wallets ranked by volume &middot; Updated every 6 hours
             </p>
           </div>
           <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-sm">
@@ -109,7 +109,7 @@ export default function LeaderboardPage() {
                   <p className="text-sm text-zinc-400">{formatUsd(searchResult.total_volume_usd ?? 0)}</p>
                 </div>
               ) : (
-                <p className="text-sm text-zinc-500">Not in top 100k</p>
+                <p className="text-sm text-zinc-500">Not found in leaderboard</p>
               )}
               <button
                 type="button"

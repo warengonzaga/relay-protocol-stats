@@ -20,15 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add Dependabot for npm, Actions, and Docker
 - bump the npm_and_yarn group across 1 directory with 2 updates (#11)
 
-## [1.3.1] - 2026-03-04
-
-### Changed
-
-- bump the npm_and_yarn group across 1 directory with 2 updates (#13)
-- ignore .contributerc.json config file
-- add Dependabot for npm, Actions, and Docker
-- bump the npm_and_yarn group across 1 directory with 2 updates (#11)
-
 ## [1.3.0] - 2026-02-23
 
 ### Added

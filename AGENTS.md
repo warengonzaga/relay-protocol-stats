@@ -100,15 +100,16 @@ When unsure which type to use, follow this order:
 
 ## Package Manager
 
-This project uses **pnpm** as the package manager. Always use pnpm commands:
+This project uses **bun** as the package manager and runtime. Always use bun commands:
 
-- **Install dependencies**: `pnpm install`
-- **Run dev server**: `pnpm run dev`
-- **Build project**: `pnpm run build`
-- **Add packages**: `pnpm add <package>`
-- **Remove packages**: `pnpm remove <package>`
+- **Install dependencies**: `bun install`
+- **Run dev server**: `bun run dev`
+- **Build project**: `bun run build`
+- **Add packages**: `bun add <package>`
+- **Remove packages**: `bun remove <package>`
+- **Run scripts**: `bun run <script>` or `bun <file.ts>` for direct TS execution
 
-Do NOT use npm or yarn commands. The project includes both `pnpm-lock.yaml` and `package-lock.json`, but pnpm is the standard for this project.
+Do NOT use npm, yarn, or pnpm commands.
 
 ## AI Agent Instructions
 
@@ -123,8 +124,8 @@ When generating commits for this project:
 
 When working with this project:
 
-1. Always use pnpm for package management (install, add, remove, run)
-2. Never use npm or yarn commands
-3. Respect the pnpm-lock.yaml file for dependency resolution
+1. Always use bun for package management (install, add, remove, run)
+2. Never use npm, yarn, or pnpm commands
+3. Respect the bun.lock file for dependency resolution
 
 For more details, see the full specification: https://github.com/wgtechlabs/clean-commit/blob/main/SPECIFICATION.md

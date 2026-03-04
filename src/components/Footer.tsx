@@ -1,4 +1,4 @@
-import { Star, Bug, GitPullRequest, Heart } from 'lucide-react';
+import { Bug, GitPullRequest, Heart, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Footer() {
@@ -52,8 +52,8 @@ export default function Footer() {
           {/* Disclaimer */}
           <div className="space-y-2 text-xs sm:text-sm text-muted-foreground w-full sm:max-w-lg mx-auto">
             <p className="leading-relaxed">
-              <strong>Disclaimer:</strong> This is an independent community project, not officially affiliated with Relay Protocol.
-              Built for informational purposes only.
+              <strong>Disclaimer:</strong> This is an independent community project, not officially affiliated with
+              Relay Protocol. Built for informational purposes only.
             </p>
 
             {/* Creator and Version */}
@@ -64,7 +64,9 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-primary hover:underline"
-              >Waren Gonzaga</a>
+              >
+                Waren Gonzaga
+              </a>
               <span className="text-muted-foreground/50">•</span>
               <a
                 href={`${repoUrl}/releases`}

@@ -1,6 +1,10 @@
 -- Postgres function for atomic wallet volume upsert.
 -- Called by the sync script via supabase.rpc('upsert_wallet_batch', { wallets: [...] })
 -- This properly increments existing values instead of overwriting them.
+--
+-- SECURITY DEFINER: Runs with the owner's privileges, bypassing RLS.
+-- This is intentional — the function is restricted to service_role only
+-- via REVOKE/GRANT below, and service_role already bypasses RLS.
 
 CREATE OR REPLACE FUNCTION upsert_wallet_batch(wallets JSONB)
 RETURNS void

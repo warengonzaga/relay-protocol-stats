@@ -118,7 +118,9 @@ async function fetchPage(params: { continuation?: string; startTimestamp?: numbe
   if (params.continuation) {
     url.searchParams.set('continuation', params.continuation);
   } else if (params.startTimestamp && params.startTimestamp > 0) {
-    url.searchParams.set('startTimestamp', String(params.startTimestamp));
+    // Relay API expects seconds, but we store milliseconds internally
+    const startTimestampSec = Math.floor(params.startTimestamp / 1000);
+    url.searchParams.set('startTimestamp', String(startTimestampSec));
   }
 
   const res = await fetch(url.toString(), { headers: relayHeaders });

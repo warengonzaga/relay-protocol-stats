@@ -266,10 +266,16 @@ async function runSync(): Promise<void> {
   for (;;) {
     if (pagesProcessed >= MAX_PAGES_PER_RUN) {
       console.log(
-        `[sync] Hit MAX_PAGES_PER_RUN (${MAX_PAGES_PER_RUN}), stopping. Next run will resume from saved continuation.`,
+        `[sync] Hit MAX_PAGES_PER_RUN (${MAX_PAGES_PER_RUN}), stopping. Next run will resume from saved cursor.`,
       );
-      // Persist continuation so the next run resumes cleanly without re-processing
-      await withRetry(() => updateSyncContinuation(supabase, continuation));
+      // Persist state so the next run resumes cleanly without re-processing
+      if (continuation) {
+        // Non-null continuation: resume from this cursor on next run
+        await withRetry(() => updateSyncContinuation(supabase, continuation));
+      } else if (maxCreatedAtMs > 0) {
+        // No continuation available: advance timestamp to avoid reprocessing
+        await withRetry(() => completeSyncRun(supabase, maxCreatedAtMs));
+      }
       return;
     }
 

@@ -10,6 +10,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.4.0] - 2026-03-04
+
+### Added
+
+- add leaderboard sync script
+- add Relay leaderboard with Supabase backend (#24)
+
+### Changed
+
+- suppress noArrayIndexKey for skeleton row placeholders
+- remove autoprefixer dependency
+- update release action to v1.6.0 and enable version file sync
+- upgrade tailwindcss v3 → v4 and lucide-react
+- Bump actions/upload-pages-artifact from 3 to 4 (#15)
+- Bump actions/configure-pages from 4 to 5 (#16)
+- Bump actions/checkout from 4 to 6 (#17)
+- Bump @types/node from 24.10.9 to 25.3.3 (#21)
+- Bump tailwindcss from 3.4.19 to 4.2.1 (#23)
+- Bump lucide-react (#25)
+
+### Fixed
+
+- set search_path in upsert_wallet_batch function
+- handle null continuation on max pages per run
+- wrap handleAnalyze in useCallback
+
 ## [1.3.1] - 2026-03-04
 
 ### Changed

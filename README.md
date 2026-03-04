@@ -24,7 +24,7 @@ A web dashboard for analyzing your [Relay Protocol](https://relay.link) cross-ch
 | Category | Tools |
 |---|---|
 | Frontend | React 19, TypeScript 5.9, Vite 7 |
-| Styling | Tailwind CSS 3.4, shadcn/ui |
+| Styling | Tailwind CSS 4, shadcn/ui |
 | Data | Supabase, Relay API, Axios, Viem |
 | Tooling | Bun, Biome |
 | CI/CD | GitHub Actions, GitHub Pages |

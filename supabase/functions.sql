@@ -10,6 +10,7 @@ CREATE OR REPLACE FUNCTION upsert_wallet_batch(wallets JSONB)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   w JSONB;

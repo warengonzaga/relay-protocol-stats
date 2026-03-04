@@ -34,9 +34,7 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
   const offset = (safePage - 1) * PAGE_SIZE;
 
   // Get total count
-  const { count, error: countError } = await supabase
-    .from('wallet_volume')
-    .select('*', { count: 'exact', head: true });
+  const { count, error: countError } = await supabase.from('wallet_volume').select('*', { count: 'exact', head: true });
 
   if (countError) {
     throw new Error(`Failed to fetch leaderboard count: ${countError.message}`);

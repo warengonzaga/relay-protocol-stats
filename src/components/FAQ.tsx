@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { Card } from "./ui/card";
-import { Button } from "./ui/button";
+import { useState } from 'react';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
 
 const faqs = [
   {
-    question: "What is this project?",
+    question: 'What is this project?',
     answer:
       "This is an independent community project built to give Relay Protocol users personal insight into their stats. It's not affiliated with the official Relay team. It's just a tool by and for the community!",
   },
   {
-    question: "Why Relay Protocol Stats?",
+    question: 'Why Relay Protocol Stats?',
     answer:
-      "Relay Protocol Stats are open source and free to use. Anyone can contribute by submitting a PR and help shape the dashboard to fit what we, as Relay Protocol users, want to see.",
+      'Relay Protocol Stats are open source and free to use. Anyone can contribute by submitting a PR and help shape the dashboard to fit what we, as Relay Protocol users, want to see.',
   },
   {
     question: "Why is there no 'Connect Wallet' button?",
@@ -42,18 +42,16 @@ export default function FAQ() {
             >
               <span className="flex-1">{faq.question}</span>
               <span className="ml-2 flex-shrink-0 transition-transform duration-300">
-                {openIndex === idx ? "-" : "+"}
+                {openIndex === idx ? '-' : '+'}
               </span>
             </Button>
             <div
               id={`faq-panel-${idx}`}
               className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                openIndex === idx ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                openIndex === idx ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
               }`}
             >
-              <div className="px-4 pb-4 text-gray-100">
-                {faq.answer}
-              </div>
+              <div className="px-4 pb-4 text-gray-100">{faq.answer}</div>
             </div>
           </Card>
         ))}

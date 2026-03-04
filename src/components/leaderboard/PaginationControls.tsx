@@ -12,13 +12,7 @@ interface PaginationControlsProps {
 export default function PaginationControls({ page, totalPages, onPrev, onNext, disabled }: PaginationControlsProps) {
   return (
     <div className="flex items-center justify-center gap-4 py-6">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onPrev}
-        disabled={page <= 1 || disabled}
-        className="gap-1.5"
-      >
+      <Button variant="outline" size="sm" onClick={onPrev} disabled={page <= 1 || disabled} className="gap-1.5">
         <ChevronLeft className="h-4 w-4" />
         Previous
       </Button>

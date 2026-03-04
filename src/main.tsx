@@ -1,11 +1,11 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import './index.css'
-import App from './App.tsx'
-import LeaderboardPage from './pages/LeaderboardPage.tsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import './index.css';
+import App from './App.tsx';
+import LeaderboardPage from './pages/LeaderboardPage.tsx';
 
-const base = import.meta.env.BASE_URL || '/'
+const base = import.meta.env.BASE_URL || '/';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -16,4 +16,4 @@ createRoot(document.getElementById('root')!).render(
       </Routes>
     </BrowserRouter>
   </StrictMode>,
-)
+);

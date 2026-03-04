@@ -73,11 +73,11 @@ function getVolumeUsd(data?: RelayRequestData): number {
   const meta = data.metadata?.currencyIn;
   if (meta?.amountUsd) {
     const v = parseFloat(meta.amountUsd);
-    if (!isNaN(v)) return v;
+    if (!Number.isNaN(v)) return v;
   }
   if (meta?.amountUsdCurrent) {
     const v = parseFloat(meta.amountUsdCurrent);
-    if (!isNaN(v)) return v;
+    if (!Number.isNaN(v)) return v;
   }
   return 0;
 }
@@ -107,10 +107,11 @@ if (process.env.RELAY_API_KEY) {
   relayHeaders['x-relay-api-key'] = process.env.RELAY_API_KEY;
 }
 
-async function fetchPage(params: {
-  continuation?: string;
-  startTimestamp?: number;
-}): Promise<{ requests: RelayRequest[]; continuation: string | null; maxCreatedAtMs: number }> {
+async function fetchPage(params: { continuation?: string; startTimestamp?: number }): Promise<{
+  requests: RelayRequest[];
+  continuation: string | null;
+  maxCreatedAtMs: number;
+}> {
   const url = new URL(`${RELAY_BASE_URL}${REQUESTS_PATH}`);
   url.searchParams.set('limit', String(PAGE_LIMIT));
 
@@ -154,7 +155,11 @@ function aggregatePage(requests: RelayRequest[]): WalletRow[] {
     const existing = byWallet.get(wallet);
 
     if (!existing) {
-      byWallet.set(wallet, { wallet_address: wallet, total_volume_usd: volumeUsd, total_tx: 1 });
+      byWallet.set(wallet, {
+        wallet_address: wallet,
+        total_volume_usd: volumeUsd,
+        total_tx: 1,
+      });
     } else {
       existing.total_volume_usd += volumeUsd;
       existing.total_tx += 1;
@@ -180,7 +185,10 @@ async function getSyncState(supabase: SupabaseClient): Promise<SyncState> {
 async function updateSyncContinuation(supabase: SupabaseClient, continuation: string | null): Promise<void> {
   const { error } = await supabase
     .from('sync_state')
-    .update({ last_continuation: continuation, updated_at: new Date().toISOString() })
+    .update({
+      last_continuation: continuation,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', 1);
 
   if (error) throw new Error(`Failed to update continuation: ${error.message}`);
@@ -263,7 +271,7 @@ async function runSync(): Promise<void> {
       fetchPage({
         continuation: continuation ?? undefined,
         startTimestamp: !continuation ? state.last_processed_timestamp : undefined,
-      })
+      }),
     );
 
     if (page.requests.length === 0) {
@@ -316,7 +324,9 @@ async function runSync(): Promise<void> {
     await withRetry(() => updateSyncContinuation(supabase, null));
   }
 
-  console.log(`[sync] Done. Pages: ${pagesProcessed}, Requests: ${requestsProcessed}, Wallets upserted: ${walletsUpserted}`);
+  console.log(
+    `[sync] Done. Pages: ${pagesProcessed}, Requests: ${requestsProcessed}, Wallets upserted: ${walletsUpserted}`,
+  );
 }
 
 // ── Entry point ─────────────────────────────────────────────────────

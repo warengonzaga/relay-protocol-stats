@@ -263,8 +263,12 @@ async function runSync(): Promise<void> {
 
   for (;;) {
     if (pagesProcessed >= MAX_PAGES_PER_RUN) {
-      console.log(`[sync] Hit MAX_PAGES_PER_RUN (${MAX_PAGES_PER_RUN}), stopping. Next run will resume.`);
-      break;
+      console.log(
+        `[sync] Hit MAX_PAGES_PER_RUN (${MAX_PAGES_PER_RUN}), stopping. Next run will resume from saved continuation.`,
+      );
+      // Persist continuation so the next run resumes cleanly without re-processing
+      await withRetry(() => updateSyncContinuation(supabase, continuation));
+      return;
     }
 
     const page = await withRetry(() =>

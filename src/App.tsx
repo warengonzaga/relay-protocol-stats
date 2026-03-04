@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import FAQ from '@/components/FAQ';
 import Footer from '@/components/Footer';
@@ -20,7 +20,7 @@ function App() {
   const [loadingAddress, setLoadingAddress] = useState<string>('');
   const currentRequestIdRef = useRef(0);
 
-  const handleAnalyze = async (address: string) => {
+  const handleAnalyze = useCallback(async (address: string) => {
     setIsLoading(true);
     setLoadingAddress(address);
     setError(null);
@@ -47,7 +47,7 @@ function App() {
       setIsLoading(false);
       setLoadingAddress('');
     }
-  };
+  }, []);
 
   // Read wallet address from URL parameter on mount
   useEffect(() => {
@@ -57,7 +57,7 @@ function App() {
     if (walletParam && isValidEthereumAddress(walletParam)) {
       handleAnalyze(walletParam);
     }
-  }, []);
+  }, [handleAnalyze]);
 
   const handleReset = () => {
     setStats(null);

@@ -16,7 +16,7 @@ export interface LeaderboardPageResponse {
 }
 
 export interface WalletRankResponse {
-  inTop100k: boolean;
+  inLeaderboard: boolean;
   rank?: number;
   wallet_address: string;
   total_volume_usd?: number;
@@ -89,7 +89,7 @@ export async function fetchWalletRank(wallet: string): Promise<WalletRankRespons
   }
 
   if (!data) {
-    return { inTop100k: false, wallet_address: normalized };
+    return { inLeaderboard: false, wallet_address: normalized };
   }
 
   const volumeUsd = parseFloat(String(data.total_volume_usd));
@@ -107,7 +107,7 @@ export async function fetchWalletRank(wallet: string): Promise<WalletRankRespons
   const rank = (count ?? 0) + 1;
 
   return {
-    inTop100k: true,
+    inLeaderboard: true,
     rank,
     wallet_address: data.wallet_address,
     total_volume_usd: volumeUsd,

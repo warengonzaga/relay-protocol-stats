@@ -106,7 +106,7 @@ export default function LeaderboardPage() {
                 <p className="text-sm text-zinc-500">Wallet lookup</p>
                 <p className="font-mono text-sm text-zinc-200">{shortenAddress(searchResult.wallet_address)}</p>
               </div>
-              {searchResult.inTop100k ? (
+              {searchResult.inLeaderboard ? (
                 <div className="text-right">
                   <p className="text-2xl font-bold text-primary">#{searchResult.rank}</p>
                   <p className="text-sm text-zinc-400">{formatUsd(searchResult.total_volume_usd ?? 0)}</p>
@@ -152,7 +152,7 @@ export default function LeaderboardPage() {
         )}
 
         {/* Table */}
-        {(!error || loading) && (
+        {!error && (
           <>
             <LeaderboardTable entries={entries} loading={loading} />
             <PaginationControls

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { formatUsd, shortenAddress } from '@/lib/leaderboard';
 import type { LeaderboardEntry } from '@/services/leaderboardApi';
 
@@ -27,9 +28,13 @@ export default function WalletRow({ entry }: WalletRowProps) {
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-sm text-zinc-200">
+          <Link
+            to={`/?wallet=${encodeURIComponent(entry.wallet_address)}`}
+            className="font-mono text-sm text-zinc-200 underline-offset-2 transition-colors hover:text-primary hover:underline"
+            title="Open wallet analytics"
+          >
             {shortenAddress(entry.wallet_address)}
-          </span>
+          </Link>
           <button
             type="button"
             onClick={copy}

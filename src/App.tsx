@@ -7,6 +7,7 @@ import RelayLogo from '@/components/RelayLogo';
 import Footer from '@/components/Footer';
 import { analyzeWalletStats, isValidEthereumAddress } from '@/services/relayApi';
 import { resolveENS } from '@/services/ens';
+import { fetchWalletRank, type WalletRankResponse } from '@/services/leaderboardApi';
 import type { WalletStats } from '@/types/relay';
 import FAQ from '@/components/FAQ';
 
@@ -17,6 +18,8 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [analyzedAddress, setAnalyzedAddress] = useState<string | null>(null);
   const [ensName, setEnsName] = useState<string | null>(null);
+  const [walletRank, setWalletRank] = useState<WalletRankResponse | null>(null);
+  const [rankLookupFailed, setRankLookupFailed] = useState(false);
   const [loadingAddress, setLoadingAddress] = useState<string>('');
   const currentRequestIdRef = useRef(0);
 
@@ -36,17 +39,27 @@ function App() {
     setError(null);
     setStats(null);
     setEnsName(null);
+    setWalletRank(null);
+    setRankLookupFailed(false);
 
     try {
-      // Resolve ENS name in parallel with wallet stats
-      const [walletStats, resolvedEns] = await Promise.all([
+      // Rank lookup is non-blocking for core wallet stats analysis.
+      const safeRankLookup = fetchWalletRank(address)
+        .then((result) => ({ result, failed: false }))
+        .catch(() => ({ result: null, failed: true }));
+
+      // Resolve ENS name in parallel with wallet stats and rank.
+      const [walletStats, resolvedEns, rankLookup] = await Promise.all([
         analyzeWalletStats(address),
         resolveENS(address),
+        safeRankLookup,
       ]);
 
       setStats(walletStats);
       setAnalyzedAddress(address);
       setEnsName(resolvedEns);
+      setWalletRank(rankLookup.result);
+      setRankLookupFailed(rankLookup.failed);
 
       // Update URL with wallet parameter
       const url = new URL(window.location.href);
@@ -56,6 +69,8 @@ function App() {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       setAnalyzedAddress(null);
       setEnsName(null);
+      setWalletRank(null);
+      setRankLookupFailed(false);
     } finally {
       setIsLoading(false);
       setLoadingAddress('');
@@ -67,6 +82,8 @@ function App() {
     setError(null);
     setAnalyzedAddress(null);
     setEnsName(null);
+    setWalletRank(null);
+    setRankLookupFailed(false);
     setLoadingAddress('');
 
     // Clear wallet parameter from URL
@@ -88,11 +105,20 @@ function App() {
     const requestId = currentRequestIdRef.current;
 
     try {
-      const walletStats = await analyzeWalletStats(analyzedAddress);
+      const safeRankLookup = fetchWalletRank(analyzedAddress)
+        .then((result) => ({ result, failed: false }))
+        .catch(() => ({ result: null, failed: true }));
+
+      const [walletStats, rankLookup] = await Promise.all([
+        analyzeWalletStats(analyzedAddress),
+        safeRankLookup,
+      ]);
 
       // Only update if this is still the latest request
       if (requestId === currentRequestIdRef.current) {
         setStats(walletStats);
+        setWalletRank(rankLookup.result);
+        setRankLookupFailed(rankLookup.failed);
       }
     } catch (err) {
       // Only update error if this is still the latest request
@@ -135,7 +161,16 @@ function App() {
 
         {isLoading && <LoadingSpinner address={loadingAddress} />}
 
-        {!isLoading && <StatsDisplay stats={stats} error={error} onRefresh={handleRefresh} isRefreshing={isRefreshing} />}
+        {!isLoading && (
+          <StatsDisplay
+            stats={stats}
+            error={error}
+            onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
+            walletRank={walletRank}
+            rankLookupFailed={rankLookupFailed}
+          />
+        )}
       </div>
 
       {!isLoading && !analyzedAddress && <FAQ />}

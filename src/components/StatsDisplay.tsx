@@ -2,19 +2,29 @@ import { useState } from 'react';
 import type { WalletStats, VolumeRangeKey } from '@/types/relay';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, Trophy } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import type { WalletRankResponse } from '@/services/leaderboardApi';
 
 interface StatsDisplayProps {
   stats: WalletStats | null;
   error: string | null;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  walletRank?: WalletRankResponse | null;
+  rankLookupFailed?: boolean;
 }
 
 const VOLUME_RANGES: VolumeRangeKey[] = ['7D', '30D', '1Y'];
 
-export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = false }: StatsDisplayProps) {
+export default function StatsDisplay({
+  stats,
+  error,
+  onRefresh,
+  isRefreshing = false,
+  walletRank = null,
+  rankLookupFailed = false,
+}: StatsDisplayProps) {
   const [volumeRange, setVolumeRange] = useState<VolumeRangeKey>('7D');
   if (error) {
     return (
@@ -57,6 +67,36 @@ export default function StatsDisplay({ stats, error, onRefresh, isRefreshing = f
           </Button>
         )}
       </div>
+
+      {/* Leaderboard rank */}
+      {(walletRank || rankLookupFailed) && (
+        <Card>
+          <CardHeader className="pb-2 sm:pb-3">
+            <CardDescription className="text-sm flex items-center gap-1.5">
+              <Trophy className="h-3.5 w-3.5 text-primary" />
+              Leaderboard Rank
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {walletRank?.inTop100k && walletRank.rank ? (
+              <div className="space-y-1">
+                <p className="text-2xl sm:text-3xl font-bold">#{walletRank.rank.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Global Relay leaderboard position</p>
+              </div>
+            ) : walletRank && !walletRank.inTop100k ? (
+              <div className="space-y-1">
+                <p className="text-base sm:text-lg font-semibold">Not in top 100k</p>
+                <p className="text-xs text-muted-foreground">Wallet has no current top-100k rank</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <p className="text-base sm:text-lg font-semibold">Rank unavailable</p>
+                <p className="text-xs text-muted-foreground">Could not load leaderboard rank right now</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">

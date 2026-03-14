@@ -74,31 +74,20 @@ pnpm build
 pnpm preview
 ```
 
-## Leaderboard Backend Setup (Supabase)
+## Leaderboard Setup (Supabase Direct)
 
-The leaderboard UI reads data from a separate API service in `leaderboard-api/`.
+The leaderboard UI queries Supabase directly from the frontend.
 
-### Backend Environment
+Set these variables in your frontend environment:
 
-Set these variables for the API/cron deployment (e.g. Render):
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key (safe for frontend)
 
-- `DATABASE_URL` - Supabase Postgres connection string
-- `RELAY_API_KEY` - Relay API key (recommended)
-- `CORS_ALLOWED_ORIGINS` - comma-separated allowed frontend origins
-- `PORT` - API port (Render uses `10000` by default)
-
-Example `DATABASE_URL`:
+Example:
 
 ```bash
-postgresql://postgres:<password>@db.<project-ref>.supabase.co:5432/postgres?sslmode=require
-```
-
-### Frontend Environment
-
-Set `VITE_LEADERBOARD_API` to your public API URL:
-
-```bash
-VITE_LEADERBOARD_API=https://relay-protocol-stats.onrender.com
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
 ## Usage

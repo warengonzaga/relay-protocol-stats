@@ -103,13 +103,13 @@ export default function LeaderboardPage() {
                 <p className="text-sm text-zinc-500">Wallet lookup</p>
                 <p className="font-mono text-sm text-zinc-200">{shortenAddress(searchResult.wallet_address)}</p>
               </div>
-              {searchResult.inTop100k ? (
+              {searchResult.found ? (
                 <div className="text-right">
                   <p className="text-2xl font-bold text-primary">#{searchResult.rank}</p>
                   <p className="text-sm text-zinc-400">{formatUsd(searchResult.total_volume_usd ?? 0)}</p>
                 </div>
               ) : (
-                <p className="text-sm text-zinc-500">Not in top 100k</p>
+                <p className="text-sm text-zinc-500">Not ranked yet</p>
               )}
               <button
                 type="button"

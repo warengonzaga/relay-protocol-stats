@@ -103,13 +103,7 @@ export interface ChainStats {
   count: number;
 }
 
-// Daily volume for sparkline (YYYY-MM-DD, USD)
-export interface DailyVolume {
-  date: string;
-  volumeUsd: number;
-}
-
-// Chain volume breakdown
+// Volume grouped by chain
 export interface ChainVolume {
   chainId: number;
   chainName: string;
@@ -146,6 +140,11 @@ export interface Currency {
 // Aggregated wallet statistics
 // Range keys for volume sparkline
 export type VolumeRangeKey = '7D' | '30D' | '1Y';
+
+export interface DailyVolume {
+  date: string;
+  volumeUsd: number;
+}
 
 export interface DailyVolumeByRange {
   '7D': DailyVolume[];

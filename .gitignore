@@ -26,3 +26,6 @@ dist-ssr
 
 # Contribute Now Config
 .contributerc.json
+
+# Claude Code local config
+.claude/

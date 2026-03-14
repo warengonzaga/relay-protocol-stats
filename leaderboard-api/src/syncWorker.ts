@@ -167,7 +167,7 @@ export async function runSync(): Promise<SyncResult> {
   // Pagination exhausted: advance timestamp and clear continuation
   if (!stoppedEarly) {
     const newTs = maxCreatedAtMs > 0 ? BigInt(maxCreatedAtMs) : lastTs;
-    await withRetry(() => completeSyncRun(db, newTs > lastTs ? newTs : lastTs));
+    await withRetry(() => completeSyncRun(db, newTs));
     return { pagesProcessed, requestsProcessed, walletsUpserted, lastTimestamp: newTs, stoppedEarly };
   }
 

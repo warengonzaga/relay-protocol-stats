@@ -78,15 +78,15 @@ export default function StatsDisplay({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {walletRank?.inTop100k && walletRank.rank ? (
+            {walletRank?.found && walletRank.rank ? (
               <div className="space-y-1">
                 <p className="text-2xl sm:text-3xl font-bold">#{walletRank.rank.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">Global Relay leaderboard position</p>
               </div>
-            ) : walletRank && !walletRank.inTop100k ? (
+            ) : walletRank && !walletRank.found ? (
               <div className="space-y-1">
-                <p className="text-base sm:text-lg font-semibold">Not in top 100k</p>
-                <p className="text-xs text-muted-foreground">Wallet has no current top-100k rank</p>
+                <p className="text-base sm:text-lg font-semibold">Not ranked yet</p>
+                <p className="text-xs text-muted-foreground">Wallet has no current leaderboard record</p>
               </div>
             ) : (
               <div className="space-y-1">

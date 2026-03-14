@@ -1,5 +1,5 @@
-import { Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Sparkles } from 'lucide-react';
 
 const loadingMessages = [
   'Analyzing your cross-chain journey...',
@@ -63,13 +63,14 @@ export default function LoadingSpinner({ address }: LoadingSpinnerProps) {
 
         {/* Loading Message */}
         <div className="text-center space-y-2">
-          <p
-            className="text-base sm:text-lg font-medium text-foreground animate-in fade-in duration-300"
-            key={messageIndex}
-          >
+          <p className="text-base sm:text-lg font-medium text-foreground animate-in fade-in duration-300" key={messageIndex}>
             {message}
           </p>
-          {address && <p className="text-xs sm:text-sm font-mono text-muted-foreground break-all px-4">{address}</p>}
+          {address && (
+            <p className="text-xs sm:text-sm font-mono text-muted-foreground break-all px-4">
+              {address}
+            </p>
+          )}
           <p className="text-xs sm:text-sm text-muted-foreground">
             This may take a moment for wallets with many transactions
           </p>

@@ -1,4 +1,6 @@
-import { supabase } from '@/lib/supabase';
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/$/, '') ?? '';
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? '';
+const PAGE_SIZE = 50;
 
 export interface LeaderboardEntry {
   rank: number;
@@ -16,53 +18,77 @@ export interface LeaderboardPageResponse {
 }
 
 export interface WalletRankResponse {
-  inLeaderboard: boolean;
+  found: boolean;
   rank?: number;
   wallet_address: string;
   total_volume_usd?: number;
   total_tx?: number;
 }
 
-const PAGE_SIZE = 50;
+interface WalletVolumeRow {
+  wallet_address: string;
+  total_volume_usd: number | string;
+  total_tx: number;
+}
 
-/**
- * Fetch a page of the leaderboard directly from Supabase.
- * Reads from wallet_volume ordered by total_volume_usd DESC.
- */
-export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPageResponse> {
-  const safePage = Math.max(1, Math.floor(page));
-  const offset = (safePage - 1) * PAGE_SIZE;
-
-  // Get total count
-  const { count, error: countError } = await supabase.from('wallet_volume').select('*', { count: 'exact', head: true });
-
-  if (countError) {
-    throw new Error(`Failed to fetch leaderboard count: ${countError.message}`);
+function requireSupabaseConfig() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error('Leaderboard not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
   }
+}
 
-  const totalWallets = count ?? 0;
+function parseTotalCount(contentRange: string | null): number {
+  if (!contentRange) return 0;
+  const total = contentRange.split('/')[1];
+  if (!total || total === '*') return 0;
+  const parsed = Number(total);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+async function supabaseRequest(path: string, init?: RequestInit): Promise<Response> {
+  requireSupabaseConfig();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...init,
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Leaderboard request failed: HTTP ${res.status}`);
+  }
+  return res;
+}
+
+export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPageResponse> {
+  const safePage = Math.max(1, Math.floor(page) || 1);
+  const from = (safePage - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  const params = new URLSearchParams({
+    select: 'wallet_address,total_volume_usd,total_tx',
+    order: 'total_volume_usd.desc,wallet_address.asc',
+  });
+
+  const res = await supabaseRequest(`wallet_volume?${params.toString()}`, {
+    headers: {
+      Prefer: 'count=exact',
+      Range: `${from}-${to}`,
+    },
+  });
+
+  const rows = (await res.json()) as WalletVolumeRow[];
+  const totalWallets = parseTotalCount(res.headers.get('content-range'));
   const totalPages = Math.max(1, Math.ceil(totalWallets / PAGE_SIZE));
 
-  // Get page data ordered by volume descending
-  const { data, error } = await supabase
-    .from('wallet_volume')
-    .select('wallet_address, total_volume_usd, total_tx')
-    .order('total_volume_usd', { ascending: false })
-    .range(offset, offset + PAGE_SIZE - 1);
-
-  if (error) {
-    throw new Error(`Failed to fetch leaderboard: ${error.message}`);
-  }
-
-  const entries: LeaderboardEntry[] = (data ?? []).map((row, i) => ({
-    rank: offset + i + 1,
-    wallet_address: row.wallet_address,
-    total_volume_usd: parseFloat(String(row.total_volume_usd)),
-    total_tx: row.total_tx,
-  }));
-
   return {
-    data: entries,
+    data: rows.map((row, index) => ({
+      rank: from + index + 1,
+      wallet_address: row.wallet_address,
+      total_volume_usd: Number(row.total_volume_usd) || 0,
+      total_tx: row.total_tx,
+    })),
     page: safePage,
     totalPages,
     totalWallets,
@@ -70,47 +96,49 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
   };
 }
 
-/**
- * Look up a specific wallet's rank and stats.
- * Uses a count query to determine rank position.
- */
 export async function fetchWalletRank(wallet: string): Promise<WalletRankResponse> {
-  const normalized = wallet.trim().toLowerCase();
-
-  // Get the wallet's stats
-  const { data, error } = await supabase
-    .from('wallet_volume')
-    .select('wallet_address, total_volume_usd, total_tx')
-    .eq('wallet_address', normalized)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(`Failed to look up wallet: ${error.message}`);
+  const normalizedWallet = wallet.trim().toLowerCase();
+  if (!normalizedWallet) {
+    throw new Error('Wallet is required');
   }
 
-  if (!data) {
-    return { inLeaderboard: false, wallet_address: normalized };
+  const walletParams = new URLSearchParams({
+    select: 'wallet_address,total_volume_usd,total_tx',
+    wallet_address: `eq.${normalizedWallet}`,
+    limit: '1',
+  });
+
+  const walletRes = await supabaseRequest(`wallet_volume?${walletParams.toString()}`);
+  const rows = (await walletRes.json()) as WalletVolumeRow[];
+  const walletRow = rows[0];
+
+  if (!walletRow) {
+    return {
+      found: false,
+      wallet_address: normalizedWallet,
+    };
   }
 
-  const volumeUsd = parseFloat(String(data.total_volume_usd));
+  const volume = Number(walletRow.total_volume_usd) || 0;
+  const countParams = new URLSearchParams({
+    select: 'wallet_address',
+    total_volume_usd: `gt.${volume}`,
+  });
 
-  // Count how many wallets have higher volume to determine rank
-  const { count, error: rankError } = await supabase
-    .from('wallet_volume')
-    .select('*', { count: 'exact', head: true })
-    .gt('total_volume_usd', data.total_volume_usd);
-
-  if (rankError) {
-    throw new Error(`Failed to compute rank: ${rankError.message}`);
-  }
-
-  const rank = (count ?? 0) + 1;
+  const countRes = await supabaseRequest(`wallet_volume?${countParams.toString()}`, {
+    method: 'HEAD',
+    headers: {
+      Prefer: 'count=exact',
+      Range: '0-0',
+    },
+  });
+  const greaterCount = parseTotalCount(countRes.headers.get('content-range'));
 
   return {
-    inLeaderboard: true,
-    rank,
-    wallet_address: data.wallet_address,
-    total_volume_usd: volumeUsd,
-    total_tx: data.total_tx,
+    found: true,
+    rank: greaterCount + 1,
+    wallet_address: walletRow.wallet_address,
+    total_volume_usd: volume,
+    total_tx: walletRow.total_tx,
   };
 }

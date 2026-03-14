@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import FAQ from '@/components/FAQ';
-import Footer from '@/components/Footer';
+import WalletInput from '@/components/WalletInput';
+import StatsDisplay from '@/components/StatsDisplay';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import RelayLogo from '@/components/RelayLogo';
-import StatsDisplay from '@/components/StatsDisplay';
-import WalletInput from '@/components/WalletInput';
-import { resolveENS } from '@/services/ens';
+import Footer from '@/components/Footer';
 import { analyzeWalletStats, isValidEthereumAddress } from '@/services/relayApi';
+import { resolveENS } from '@/services/ens';
+import { fetchWalletRank, type WalletRankResponse } from '@/services/leaderboardApi';
 import type { WalletStats } from '@/types/relay';
+import FAQ from '@/components/FAQ';
 
 function App() {
   const [stats, setStats] = useState<WalletStats | null>(null);
@@ -17,37 +18,10 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [analyzedAddress, setAnalyzedAddress] = useState<string | null>(null);
   const [ensName, setEnsName] = useState<string | null>(null);
+  const [walletRank, setWalletRank] = useState<WalletRankResponse | null>(null);
+  const [rankLookupFailed, setRankLookupFailed] = useState(false);
   const [loadingAddress, setLoadingAddress] = useState<string>('');
   const currentRequestIdRef = useRef(0);
-
-  const handleAnalyze = useCallback(async (address: string) => {
-    setIsLoading(true);
-    setLoadingAddress(address);
-    setError(null);
-    setStats(null);
-    setEnsName(null);
-
-    try {
-      // Resolve ENS name in parallel with wallet stats
-      const [walletStats, resolvedEns] = await Promise.all([analyzeWalletStats(address), resolveENS(address)]);
-
-      setStats(walletStats);
-      setAnalyzedAddress(address);
-      setEnsName(resolvedEns);
-
-      // Update URL with wallet parameter
-      const url = new URL(window.location.href);
-      url.searchParams.set('wallet', address);
-      window.history.pushState({}, '', url.toString());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-      setAnalyzedAddress(null);
-      setEnsName(null);
-    } finally {
-      setIsLoading(false);
-      setLoadingAddress('');
-    }
-  }, []);
 
   // Read wallet address from URL parameter on mount
   useEffect(() => {
@@ -57,13 +31,59 @@ function App() {
     if (walletParam && isValidEthereumAddress(walletParam)) {
       handleAnalyze(walletParam);
     }
-  }, [handleAnalyze]);
+  }, []);
+
+  const handleAnalyze = async (address: string) => {
+    setIsLoading(true);
+    setLoadingAddress(address);
+    setError(null);
+    setStats(null);
+    setEnsName(null);
+    setWalletRank(null);
+    setRankLookupFailed(false);
+
+    try {
+      // Rank lookup is non-blocking for core wallet stats analysis.
+      const safeRankLookup = fetchWalletRank(address)
+        .then((result) => ({ result, failed: false }))
+        .catch(() => ({ result: null, failed: true }));
+
+      // Resolve ENS name in parallel with wallet stats and rank.
+      const [walletStats, resolvedEns, rankLookup] = await Promise.all([
+        analyzeWalletStats(address),
+        resolveENS(address),
+        safeRankLookup,
+      ]);
+
+      setStats(walletStats);
+      setAnalyzedAddress(address);
+      setEnsName(resolvedEns);
+      setWalletRank(rankLookup.result);
+      setRankLookupFailed(rankLookup.failed);
+
+      // Update URL with wallet parameter
+      const url = new URL(window.location.href);
+      url.searchParams.set('wallet', address);
+      window.history.pushState({}, '', url.toString());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      setAnalyzedAddress(null);
+      setEnsName(null);
+      setWalletRank(null);
+      setRankLookupFailed(false);
+    } finally {
+      setIsLoading(false);
+      setLoadingAddress('');
+    }
+  };
 
   const handleReset = () => {
     setStats(null);
     setError(null);
     setAnalyzedAddress(null);
     setEnsName(null);
+    setWalletRank(null);
+    setRankLookupFailed(false);
     setLoadingAddress('');
 
     // Clear wallet parameter from URL
@@ -85,11 +105,20 @@ function App() {
     const requestId = currentRequestIdRef.current;
 
     try {
-      const walletStats = await analyzeWalletStats(analyzedAddress);
+      const safeRankLookup = fetchWalletRank(analyzedAddress)
+        .then((result) => ({ result, failed: false }))
+        .catch(() => ({ result: null, failed: true }));
+
+      const [walletStats, rankLookup] = await Promise.all([
+        analyzeWalletStats(analyzedAddress),
+        safeRankLookup,
+      ]);
 
       // Only update if this is still the latest request
       if (requestId === currentRequestIdRef.current) {
         setStats(walletStats);
+        setWalletRank(rankLookup.result);
+        setRankLookupFailed(rankLookup.failed);
       }
     } catch (err) {
       // Only update error if this is still the latest request
@@ -114,7 +143,10 @@ function App() {
           <p className="text-muted-foreground text-sm sm:text-base px-4">
             Analyze your cross-chain transaction history
           </p>
-          <Link to="/leaderboard" className="inline-block text-sm font-medium text-primary hover:underline">
+          <Link
+            to="/leaderboard"
+            className="inline-block text-sm font-medium text-primary hover:underline"
+          >
             Global Leaderboard →
           </Link>
         </header>
@@ -130,7 +162,14 @@ function App() {
         {isLoading && <LoadingSpinner address={loadingAddress} />}
 
         {!isLoading && (
-          <StatsDisplay stats={stats} error={error} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+          <StatsDisplay
+            stats={stats}
+            error={error}
+            onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
+            walletRank={walletRank}
+            rankLookupFailed={rankLookupFailed}
+          />
         )}
       </div>
 

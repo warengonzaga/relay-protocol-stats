@@ -1,16 +1,16 @@
 import axios from 'axios';
 import type {
+  RelayResponse,
+  RelayRequest,
+  WalletStats,
   Chain,
   ChainStats,
-  ChainVolume,
+  TokenStats,
   Currency,
+  ChainVolume,
   DailyVolume,
   DailyVolumeByRange,
-  RelayRequest,
-  RelayResponse,
-  TokenStats,
   VolumeRangeKey,
-  WalletStats,
 } from '../types/relay';
 
 const BASE_URL = 'https://api.relay.link';
@@ -43,7 +43,7 @@ export async function fetchRecentRequests(limit: number = 6): Promise<RelayReque
  */
 export async function fetchAllUserRequests(userAddress: string): Promise<RelayRequest[]> {
   const allRequests: RelayRequest[] = [];
-  let continuation: string | undefined;
+  let continuation: string | undefined = undefined;
 
   try {
     do {
@@ -65,7 +65,7 @@ export async function fetchAllUserRequests(userAddress: string): Promise<RelayRe
 
       // Add small delay between paginated requests to be respectful to API
       if (continuation) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     } while (continuation);
 
@@ -89,13 +89,13 @@ function calculateVolumeUsd(request: RelayRequest): number {
 
     if (metadata?.currencyIn?.amountUsd) {
       const amountUsd = parseFloat(metadata.currencyIn.amountUsd);
-      return Number.isNaN(amountUsd) ? 0 : amountUsd;
+      return isNaN(amountUsd) ? 0 : amountUsd;
     }
 
     // Fallback: try using amountUsdCurrent if available
     if (metadata?.currencyIn?.amountUsdCurrent) {
       const amountUsd = parseFloat(metadata.currencyIn.amountUsdCurrent);
-      return Number.isNaN(amountUsd) ? 0 : amountUsd;
+      return isNaN(amountUsd) ? 0 : amountUsd;
     }
 
     return 0;
@@ -175,11 +175,11 @@ function getDateRangeOneYear(): string[] {
 /**
  * Build daily volume series for a given list of dates from a pre-aggregated map.
  */
-function buildDailyVolumeSeries(volumeByDate: Map<string, number>, dateStrings: string[]): DailyVolume[] {
-  return dateStrings.map((date) => ({
-    date,
-    volumeUsd: volumeByDate.get(date) ?? 0,
-  }));
+function buildDailyVolumeSeries(
+  volumeByDate: Map<string, number>,
+  dateStrings: string[]
+): DailyVolume[] {
+  return dateStrings.map(date => ({ date, volumeUsd: volumeByDate.get(date) ?? 0 }));
 }
 
 /**
@@ -201,7 +201,7 @@ function calculateDailyVolumeByRange(requests: RelayRequest[]): DailyVolumeByRan
 function calculateVolumeByChain(requests: RelayRequest[], chains: Chain[]): ChainVolume[] {
   const volumeByChainId = new Map<number, number>();
 
-  requests.forEach((request) => {
+  requests.forEach(request => {
     const volumeUsd = calculateVolumeUsd(request);
     if (!volumeUsd) {
       return;
@@ -213,7 +213,7 @@ function calculateVolumeByChain(requests: RelayRequest[], chains: Chain[]): Chai
     const outTxs = request.data.outTxs ?? [];
 
     if (inTxs.length > 0) {
-      inTxs.forEach((tx) => {
+      inTxs.forEach(tx => {
         if (typeof tx.chainId === 'number') {
           chainIds.add(tx.chainId);
         }
@@ -221,7 +221,7 @@ function calculateVolumeByChain(requests: RelayRequest[], chains: Chain[]): Chai
     }
 
     if (chainIds.size === 0) {
-      outTxs.forEach((tx) => {
+      outTxs.forEach(tx => {
         if (typeof tx.chainId === 'number') {
           chainIds.add(tx.chainId);
         }
@@ -232,14 +232,14 @@ function calculateVolumeByChain(requests: RelayRequest[], chains: Chain[]): Chai
       return;
     }
 
-    chainIds.forEach((chainId) => {
+    chainIds.forEach(chainId => {
       volumeByChainId.set(chainId, (volumeByChainId.get(chainId) || 0) + volumeUsd);
     });
   });
 
   return Array.from(volumeByChainId.entries())
     .map(([chainId, volumeUsd]) => {
-      const chain = chains.find((c) => c.id === chainId);
+      const chain = chains.find(c => c.id === chainId);
       return {
         chainId,
         chainName: chain?.displayName || chain?.name || `Chain ${chainId}`,
@@ -259,7 +259,7 @@ export async function fetchChains(): Promise<Chain[]> {
     const data = response.data;
 
     // The API returns {chains: [...]} structure
-    if (data?.chains && Array.isArray(data.chains)) {
+    if (data && data.chains && Array.isArray(data.chains)) {
       return data.chains as Chain[];
     }
 
@@ -301,18 +301,18 @@ export async function fetchCurrencies(): Promise<Currency[]> {
 function calculateTopChains(
   requests: RelayRequest[],
   chains: Chain[],
-  type: 'all' | 'origin' | 'destination',
+  type: 'all' | 'origin' | 'destination'
 ): ChainStats[] {
   const chainCounts = new Map<number, number>();
 
-  requests.forEach((request) => {
+  requests.forEach(request => {
     if (type === 'all' || type === 'origin') {
-      request.data.inTxs.forEach((tx) => {
+      request.data.inTxs.forEach(tx => {
         chainCounts.set(tx.chainId, (chainCounts.get(tx.chainId) || 0) + 1);
       });
     }
     if (type === 'all' || type === 'destination') {
-      request.data.outTxs.forEach((tx) => {
+      request.data.outTxs.forEach(tx => {
         chainCounts.set(tx.chainId, (chainCounts.get(tx.chainId) || 0) + 1);
       });
     }
@@ -322,7 +322,7 @@ function calculateTopChains(
   const chainStats: ChainStats[] = Array.from(chainCounts.entries())
     .map(([chainId, count]) => {
       // Find chain by matching the id property (which is the chainId)
-      const chain = chains.find((c) => c.id === chainId);
+      const chain = chains.find(c => c.id === chainId);
       return {
         chainId,
         chainName: chain?.displayName || chain?.name || `Chain ${chainId}`,
@@ -343,51 +343,51 @@ function calculateTopChains(
 const NATIVE_TOKEN_METADATA: Record<number, { symbol: string; logoUrl: string }> = {
   1: {
     symbol: 'ETH',
-    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
   },
   10: {
     symbol: 'ETH',
-    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
   },
   56: {
     symbol: 'BNB',
-    logoUrl: 'https://assets.relay.link/icons/currencies/bnb.png',
+    logoUrl: 'https://assets.relay.link/icons/currencies/bnb.png'
   },
   137: {
     symbol: 'MATIC',
-    logoUrl: 'https://assets.relay.link/icons/currencies/matic.png',
+    logoUrl: 'https://assets.relay.link/icons/currencies/matic.png'
   },
   250: {
     symbol: 'FTM',
-    logoUrl: 'https://assets.relay.link/icons/currencies/ftm.png',
+    logoUrl: 'https://assets.relay.link/icons/currencies/ftm.png'
   },
   8453: {
     symbol: 'ETH',
-    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
   },
   42161: {
     symbol: 'ETH',
-    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
   },
   43114: {
     symbol: 'AVAX',
-    logoUrl: 'https://assets.relay.link/icons/currencies/avax.png',
+    logoUrl: 'https://assets.relay.link/icons/currencies/avax.png'
   },
   7777777: {
     symbol: 'ETH',
-    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
   },
   59144: {
     symbol: 'ETH',
-    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
   },
   534352: {
     symbol: 'ETH',
-    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
   },
   81457: {
     symbol: 'ETH',
-    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png',
+    logoUrl: 'https://assets.relay.link/icons/currencies/eth.png'
   },
 };
 
@@ -398,28 +398,27 @@ function calculateTopTokens(
   requests: RelayRequest[],
   chains: Chain[],
   currencies: Currency[],
-  type: 'all' | 'origin' | 'destination',
+  type: 'all' | 'origin' | 'destination'
 ): TokenStats[] {
   // Map to track token usage: key = "tokenAddress:chainId", value = count
   const tokenCounts = new Map<string, { address: string; chainId: number; count: number; symbol?: string }>();
 
-  requests.forEach((request) => {
+  requests.forEach(request => {
     // Get token from currency field (this is the token contract address)
     let tokenAddress = request.data.currency;
     if (!tokenAddress || typeof tokenAddress !== 'string') {
       return; // Skip if no currency or invalid
     }
-
+    
     // Normalize native token addresses
     // Native tokens like 'eth', 'bnb', 'matic' should be converted to zero address
-    const isNativeToken =
-      tokenAddress.toLowerCase() === 'eth' ||
-      tokenAddress.toLowerCase() === 'bnb' ||
-      tokenAddress.toLowerCase() === 'matic' ||
-      tokenAddress.toLowerCase() === 'avax' ||
-      tokenAddress.toLowerCase() === 'ftm' ||
-      !tokenAddress.startsWith('0x');
-
+    const isNativeToken = tokenAddress.toLowerCase() === 'eth' ||
+        tokenAddress.toLowerCase() === 'bnb' ||
+        tokenAddress.toLowerCase() === 'matic' ||
+        tokenAddress.toLowerCase() === 'avax' ||
+        tokenAddress.toLowerCase() === 'ftm' ||
+        !tokenAddress.startsWith('0x');
+    
     if (isNativeToken) {
       tokenAddress = '0x0000000000000000000000000000000000000000';
     }
@@ -440,7 +439,7 @@ function calculateTopTokens(
     // This prevents the "0X00...0000" issue
 
     if (type === 'all' || type === 'origin') {
-      request.data.inTxs.forEach((tx) => {
+      request.data.inTxs.forEach(tx => {
         const key = `${tokenAddress}:${tx.chainId}`;
         const existing = tokenCounts.get(key);
         if (existing) {
@@ -457,7 +456,7 @@ function calculateTopTokens(
     }
 
     if (type === 'all' || type === 'destination') {
-      request.data.outTxs.forEach((tx) => {
+      request.data.outTxs.forEach(tx => {
         const key = `${tokenAddress}:${tx.chainId}`;
         const existing = tokenCounts.get(key);
         if (existing) {
@@ -476,15 +475,15 @@ function calculateTopTokens(
 
   // Convert to array and sort by count
   const tokenStats: TokenStats[] = Array.from(tokenCounts.values())
-    .map((token) => {
-      const chain = chains.find((c) => c.id === token.chainId);
+    .map(token => {
+      const chain = chains.find(c => c.id === token.chainId);
 
       // Check if this is a native token (zero address)
       const isNativeToken = token.address === '0x0000000000000000000000000000000000000000';
 
       // Find currency metadata for logo
       const currency = currencies.find(
-        (c) => c.address.toLowerCase() === token.address.toLowerCase() && c.chainId === token.chainId,
+        c => c.address.toLowerCase() === token.address.toLowerCase() && c.chainId === token.chainId
       );
 
       // Use symbol from currency metadata if available
@@ -541,14 +540,14 @@ export async function analyzeWalletStats(userAddress: string): Promise<WalletSta
   ]);
 
   // Filter only successful transactions
-  const successfulRequests = allRequests.filter((req) => req.status === 'success');
+  const successfulRequests = allRequests.filter(req => req.status === 'success');
 
   // Calculate transaction count
   const transactionCount = successfulRequests.length;
   const totalRequests = allRequests.length;
   // Count failed and refunded transactions separately
-  const failedRequests = allRequests.filter((req) => req.status === 'failure').length;
-  const refundedRequests = allRequests.filter((req) => req.status === 'refund').length;
+  const failedRequests = allRequests.filter(req => req.status === 'failure').length;
+  const refundedRequests = allRequests.filter(req => req.status === 'refund').length;
 
   // Calculate success rate (percentage)
   const successRate = totalRequests > 0 ? (transactionCount / totalRequests) * 100 : 0;

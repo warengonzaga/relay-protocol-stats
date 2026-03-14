@@ -1,16 +1,11 @@
-import { Search } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { Search } from 'lucide-react';
 import LeaderboardTable from '@/components/leaderboard/LeaderboardTable';
 import PaginationControls from '@/components/leaderboard/PaginationControls';
 import { Button } from '@/components/ui/button';
+import { fetchLeaderboardPage, fetchWalletRank, type LeaderboardEntry, type WalletRankResponse } from '@/services/leaderboardApi';
 import { formatUsd, shortenAddress } from '@/lib/leaderboard';
-import {
-  fetchLeaderboardPage,
-  fetchWalletRank,
-  type LeaderboardEntry,
-  type WalletRankResponse,
-} from '@/services/leaderboardApi';
 
 export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -75,9 +70,11 @@ export default function LeaderboardPage() {
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-zinc-100 md:text-4xl">Global Relay Leaderboard</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-100 md:text-4xl">
+              Global Relay Leaderboard
+            </h1>
             <p className="mt-1 text-sm text-zinc-500">
-              {totalWallets.toLocaleString()} wallets ranked by volume &middot; Updated every 6 hours
+              Top {totalWallets.toLocaleString()} wallets ranked by all-time volume &middot; Updated hourly
             </p>
           </div>
           <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-sm">
@@ -106,13 +103,13 @@ export default function LeaderboardPage() {
                 <p className="text-sm text-zinc-500">Wallet lookup</p>
                 <p className="font-mono text-sm text-zinc-200">{shortenAddress(searchResult.wallet_address)}</p>
               </div>
-              {searchResult.inLeaderboard ? (
+              {searchResult.found ? (
                 <div className="text-right">
                   <p className="text-2xl font-bold text-primary">#{searchResult.rank}</p>
                   <p className="text-sm text-zinc-400">{formatUsd(searchResult.total_volume_usd ?? 0)}</p>
                 </div>
               ) : (
-                <p className="text-sm text-zinc-500">Not found in leaderboard</p>
+                <p className="text-sm text-zinc-500">Not ranked yet</p>
               )}
               <button
                 type="button"
@@ -127,13 +124,7 @@ export default function LeaderboardPage() {
         {searchError && (
           <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-400">
             {searchError}
-            <button
-              type="button"
-              onClick={() => setSearchError(null)}
-              className="ml-3 text-zinc-500 hover:text-zinc-300"
-            >
-              Dismiss
-            </button>
+            <button type="button" onClick={() => setSearchError(null)} className="ml-3 text-zinc-500 hover:text-zinc-300">Dismiss</button>
           </div>
         )}
 
@@ -152,7 +143,7 @@ export default function LeaderboardPage() {
         )}
 
         {/* Table */}
-        {!error && (
+        {(!error || loading) && (
           <>
             <LeaderboardTable entries={entries} loading={loading} />
             <PaginationControls

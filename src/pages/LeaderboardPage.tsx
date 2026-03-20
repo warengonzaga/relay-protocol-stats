@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import LeaderboardTable from '@/components/leaderboard/LeaderboardTable';
 import PaginationControls from '@/components/leaderboard/PaginationControls';
+import TopThreePodium from '@/components/leaderboard/TopThreePodium';
 import { Button } from '@/components/ui/button';
 import { fetchLeaderboardPage, fetchWalletRank, type LeaderboardEntry, type WalletRankResponse } from '@/services/leaderboardApi';
 import { formatUsd, shortenAddress } from '@/lib/leaderboard';
@@ -20,6 +21,7 @@ export default function LeaderboardPage() {
   const [searching, setSearching] = useState(false);
   const [searchResult, setSearchResult] = useState<WalletRankResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [topThree, setTopThree] = useState<LeaderboardEntry[] | null>(null);
 
   const loadPage = useCallback(async (p: number) => {
     setLoading(true);
@@ -30,6 +32,9 @@ export default function LeaderboardPage() {
       setPage(res.page);
       setTotalPages(res.totalPages);
       setTotalWallets(res.totalWallets);
+      if (p === 1 && res.data.length >= 3) {
+        setTopThree(res.data.slice(0, 3));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load leaderboard');
       setEntries([]);
@@ -145,6 +150,13 @@ export default function LeaderboardPage() {
         {/* Table */}
         {(!error || loading) && (
           <>
+            {topThree && (
+              <TopThreePodium
+                first={topThree[0]}
+                second={topThree[1]}
+                third={topThree[2]}
+              />
+            )}
             <LeaderboardTable entries={entries} loading={loading} />
             <PaginationControls
               page={page}

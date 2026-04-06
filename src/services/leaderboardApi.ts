@@ -13,6 +13,8 @@ export interface LeaderboardPageResponse {
   totalPages: number;
   totalWallets: number;
   pageSize: number;
+  hasNextPage: boolean;
+  totalCountAvailable: boolean;
 }
 
 export interface WalletRankResponse {
@@ -33,28 +35,36 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
   const safePage = Math.max(1, Math.floor(page));
   const offset = (safePage - 1) * PAGE_SIZE;
 
-  // Get total count
-  const { count, error: countError } = await supabase.from('wallet_volume').select('*', { count: 'exact', head: true });
-
-  if (countError) {
-    throw new Error(`Failed to fetch leaderboard count: ${countError.message}`);
-  }
-
-  const totalWallets = count ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalWallets / PAGE_SIZE));
-
-  // Get page data ordered by volume descending
+  // Fetch one extra row to detect whether another page exists even if total counts are unavailable.
   const { data, error } = await supabase
     .from('wallet_volume')
     .select('wallet_address, total_volume_usd, total_tx')
     .order('total_volume_usd', { ascending: false })
-    .range(offset, offset + PAGE_SIZE - 1);
+    .range(offset, offset + PAGE_SIZE);
 
   if (error) {
     throw new Error(`Failed to fetch leaderboard: ${error.message}`);
   }
 
-  const entries: LeaderboardEntry[] = (data ?? []).map((row, i) => ({
+  const pageRows = data ?? [];
+  const hasNextPage = pageRows.length > PAGE_SIZE;
+  const visibleRows = hasNextPage ? pageRows.slice(0, PAGE_SIZE) : pageRows;
+
+  let totalWallets = offset + visibleRows.length;
+  let totalPages = Math.max(1, safePage + (hasNextPage ? 1 : 0));
+  let totalCountAvailable = false;
+
+  const { count, error: countError } = await supabase
+    .from('wallet_volume')
+    .select('wallet_address', { count: 'planned', head: true });
+
+  if (!countError && typeof count === 'number') {
+    totalWallets = count;
+    totalPages = Math.max(1, Math.ceil(totalWallets / PAGE_SIZE));
+    totalCountAvailable = true;
+  }
+
+  const entries: LeaderboardEntry[] = visibleRows.map((row, i) => ({
     rank: offset + i + 1,
     wallet_address: row.wallet_address,
     total_volume_usd: parseFloat(String(row.total_volume_usd)),
@@ -67,6 +77,8 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
     totalPages,
     totalWallets,
     pageSize: PAGE_SIZE,
+    hasNextPage,
+    totalCountAvailable,
   };
 }
 
@@ -94,21 +106,15 @@ export async function fetchWalletRank(wallet: string): Promise<WalletRankRespons
 
   const volumeUsd = parseFloat(String(data.total_volume_usd));
 
-  // Count how many wallets have higher volume to determine rank
+  // Count how many wallets have higher volume to determine rank.
   const { count, error: rankError } = await supabase
     .from('wallet_volume')
-    .select('*', { count: 'exact', head: true })
+    .select('wallet_address', { count: 'planned', head: true })
     .gt('total_volume_usd', data.total_volume_usd);
-
-  if (rankError) {
-    throw new Error(`Failed to compute rank: ${rankError.message}`);
-  }
-
-  const rank = (count ?? 0) + 1;
 
   return {
     inLeaderboard: true,
-    rank,
+    rank: !rankError && typeof count === 'number' ? count + 1 : undefined,
     wallet_address: data.wallet_address,
     total_volume_usd: volumeUsd,
     total_tx: data.total_tx,

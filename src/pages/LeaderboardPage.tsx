@@ -17,6 +17,8 @@ export default function LeaderboardPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalWallets, setTotalWallets] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [totalCountAvailable, setTotalCountAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,9 +37,12 @@ export default function LeaderboardPage() {
       setPage(res.page);
       setTotalPages(res.totalPages);
       setTotalWallets(res.totalWallets);
+      setHasNextPage(res.hasNextPage);
+      setTotalCountAvailable(res.totalCountAvailable);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load leaderboard');
       setEntries([]);
+      setHasNextPage(false);
     } finally {
       setLoading(false);
     }
@@ -77,7 +82,8 @@ export default function LeaderboardPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-zinc-100 md:text-4xl">Global Relay Leaderboard</h1>
             <p className="mt-1 text-sm text-zinc-500">
-              {totalWallets.toLocaleString()} wallets ranked by volume &middot; Updated every 6 hours
+              {totalCountAvailable ? `${totalWallets.toLocaleString()} wallets ranked by volume` : 'Wallets ranked by volume'}
+              {' · '}Updated every 6 hours
             </p>
           </div>
           <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-sm">
@@ -108,8 +114,13 @@ export default function LeaderboardPage() {
               </div>
               {searchResult.inLeaderboard ? (
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-primary">#{searchResult.rank}</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {typeof searchResult.rank === 'number' ? `#${searchResult.rank}` : '—'}
+                  </p>
                   <p className="text-sm text-zinc-400">{formatUsd(searchResult.total_volume_usd ?? 0)}</p>
+                  {typeof searchResult.rank !== 'number' ? (
+                    <p className="text-xs text-zinc-500">Rank temporarily unavailable</p>
+                  ) : null}
                 </div>
               ) : (
                 <p className="text-sm text-zinc-500">Not found in leaderboard</p>
@@ -158,6 +169,8 @@ export default function LeaderboardPage() {
             <PaginationControls
               page={page}
               totalPages={totalPages}
+              hasNextPage={hasNextPage}
+              totalCountAvailable={totalCountAvailable}
               onPrev={() => loadPage(page - 1)}
               onNext={() => loadPage(page + 1)}
               disabled={loading}

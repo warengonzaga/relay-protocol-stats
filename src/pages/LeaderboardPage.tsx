@@ -82,7 +82,9 @@ export default function LeaderboardPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-zinc-100 md:text-4xl">Global Relay Leaderboard</h1>
             <p className="mt-1 text-sm text-zinc-500">
-              {totalCountAvailable ? `${totalWallets.toLocaleString()} wallets ranked by volume` : 'Wallets ranked by volume'}
+              {totalCountAvailable
+                ? `${totalWallets.toLocaleString()} wallets ranked by volume`
+                : 'Wallets ranked by volume'}
               {' · '}Updated every 6 hours
             </p>
           </div>

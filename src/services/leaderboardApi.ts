@@ -50,6 +50,8 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
   const hasNextPage = pageRows.length > PAGE_SIZE;
   const visibleRows = hasNextPage ? pageRows.slice(0, PAGE_SIZE) : pageRows;
 
+  // When Supabase cannot return a total count, fall back to the rows we know about.
+  // If another page exists this is a lower bound; otherwise it is the exact total.
   let totalWallets = offset + visibleRows.length;
   let totalPages = Math.max(1, safePage + (hasNextPage ? 1 : 0));
   let totalCountAvailable = false;

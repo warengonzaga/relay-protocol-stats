@@ -51,7 +51,11 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
   const pageRows = data ?? [];
   const hasNextPage = pageRows.length > PAGE_SIZE;
   const visibleRows = hasNextPage ? pageRows.slice(0, PAGE_SIZE) : pageRows;
-  const lowerBoundTotalWallets = offset + visibleRows.length + (hasNextPage ? 1 : 0);
+  const lowerBoundTotalWallets = hasNextPage
+    ? offset + PAGE_SIZE + 1
+    : visibleRows.length > 0
+      ? offset + visibleRows.length
+      : 0;
 
   // When Supabase cannot return a total count, fall back to the rows we know about.
   // If another page exists this is a lower bound; otherwise it is the exact total.
@@ -66,7 +70,7 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
 
   if (!exactCountError && typeof exactCount === 'number') {
     totalWallets = exactCount;
-    totalPages = Math.max(1, safePage, Math.ceil(totalWallets / PAGE_SIZE));
+    totalPages = Math.max(1, Math.ceil(totalWallets / PAGE_SIZE));
     totalCountAvailable = true;
   } else {
     const { count: plannedCount, error: plannedCountError } = await supabase
@@ -75,7 +79,7 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
 
     if (!plannedCountError && typeof plannedCount === 'number') {
       totalWallets = Math.max(plannedCount, lowerBoundTotalWallets);
-      totalPages = Math.max(1, safePage, Math.ceil(totalWallets / PAGE_SIZE));
+      totalPages = Math.max(1, Math.ceil(totalWallets / PAGE_SIZE));
       totalCountIsEstimated = true;
     }
   }

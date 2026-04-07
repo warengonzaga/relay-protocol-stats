@@ -19,6 +19,7 @@ export default function LeaderboardPage() {
   const [totalWallets, setTotalWallets] = useState(0);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [totalCountAvailable, setTotalCountAvailable] = useState(false);
+  const [totalCountIsEstimated, setTotalCountIsEstimated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,10 +40,16 @@ export default function LeaderboardPage() {
       setTotalWallets(res.totalWallets);
       setHasNextPage(res.hasNextPage);
       setTotalCountAvailable(res.totalCountAvailable);
+      setTotalCountIsEstimated(res.totalCountIsEstimated);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load leaderboard');
       setEntries([]);
+      setPage(Math.max(1, Math.floor(p)));
+      setTotalPages(1);
+      setTotalWallets(0);
       setHasNextPage(false);
+      setTotalCountAvailable(false);
+      setTotalCountIsEstimated(false);
     } finally {
       setLoading(false);
     }
@@ -84,7 +91,9 @@ export default function LeaderboardPage() {
             <p className="mt-1 text-sm text-zinc-500">
               {totalCountAvailable
                 ? `${totalWallets.toLocaleString()} wallets ranked by volume`
-                : 'Wallets ranked by volume'}
+                : totalCountIsEstimated
+                  ? `About ${totalWallets.toLocaleString()} wallets ranked by volume`
+                  : 'Wallets ranked by volume'}
               {' · '}Updated every 6 hours
             </p>
           </div>
@@ -117,9 +126,14 @@ export default function LeaderboardPage() {
               {searchResult.inLeaderboard ? (
                 <div className="text-right">
                   <p className="text-2xl font-bold text-primary">
-                    {typeof searchResult.rank === 'number' ? `#${searchResult.rank}` : '—'}
+                    {typeof searchResult.rank === 'number'
+                      ? `${searchResult.rankIsEstimated ? '~' : ''}#${searchResult.rank}`
+                      : '—'}
                   </p>
                   <p className="text-sm text-zinc-400">{formatUsd(searchResult.total_volume_usd ?? 0)}</p>
+                  {typeof searchResult.rank === 'number' && searchResult.rankIsEstimated ? (
+                    <p className="text-xs text-zinc-500">Estimated rank</p>
+                  ) : null}
                   {typeof searchResult.rank !== 'number' ? (
                     <p className="text-xs text-zinc-500">Rank temporarily unavailable</p>
                   ) : null}
@@ -173,6 +187,7 @@ export default function LeaderboardPage() {
               totalPages={totalPages}
               hasNextPage={hasNextPage}
               totalCountAvailable={totalCountAvailable}
+              totalCountIsEstimated={totalCountIsEstimated}
               onPrev={() => loadPage(page - 1)}
               onNext={() => loadPage(page + 1)}
               disabled={loading}

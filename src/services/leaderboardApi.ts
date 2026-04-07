@@ -15,11 +15,13 @@ export interface LeaderboardPageResponse {
   pageSize: number;
   hasNextPage: boolean;
   totalCountAvailable: boolean;
+  totalCountIsEstimated: boolean;
 }
 
 export interface WalletRankResponse {
   inLeaderboard: boolean;
   rank?: number;
+  rankIsEstimated?: boolean;
   wallet_address: string;
   total_volume_usd?: number;
   total_tx?: number;
@@ -49,21 +51,33 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
   const pageRows = data ?? [];
   const hasNextPage = pageRows.length > PAGE_SIZE;
   const visibleRows = hasNextPage ? pageRows.slice(0, PAGE_SIZE) : pageRows;
+  const lowerBoundTotalWallets = offset + visibleRows.length + (hasNextPage ? 1 : 0);
 
   // When Supabase cannot return a total count, fall back to the rows we know about.
   // If another page exists this is a lower bound; otherwise it is the exact total.
-  let totalWallets = offset + visibleRows.length;
+  let totalWallets = lowerBoundTotalWallets;
   let totalPages = Math.max(1, safePage + (hasNextPage ? 1 : 0));
   let totalCountAvailable = false;
+  let totalCountIsEstimated = false;
 
-  const { count, error: countError } = await supabase
+  const { count: exactCount, error: exactCountError } = await supabase
     .from('wallet_volume')
-    .select('wallet_address', { count: 'planned', head: true });
+    .select('*', { count: 'exact', head: true });
 
-  if (!countError && typeof count === 'number') {
-    totalWallets = count;
-    totalPages = Math.max(1, Math.ceil(totalWallets / PAGE_SIZE));
+  if (!exactCountError && typeof exactCount === 'number') {
+    totalWallets = exactCount;
+    totalPages = Math.max(1, safePage, Math.ceil(totalWallets / PAGE_SIZE));
     totalCountAvailable = true;
+  } else {
+    const { count: plannedCount, error: plannedCountError } = await supabase
+      .from('wallet_volume')
+      .select('*', { count: 'planned', head: true });
+
+    if (!plannedCountError && typeof plannedCount === 'number') {
+      totalWallets = Math.max(plannedCount, lowerBoundTotalWallets);
+      totalPages = Math.max(1, safePage, Math.ceil(totalWallets / PAGE_SIZE));
+      totalCountIsEstimated = true;
+    }
   }
 
   const entries: LeaderboardEntry[] = visibleRows.map((row, i) => ({
@@ -81,6 +95,7 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
     pageSize: PAGE_SIZE,
     hasNextPage,
     totalCountAvailable,
+    totalCountIsEstimated,
   };
 }
 
@@ -108,15 +123,32 @@ export async function fetchWalletRank(wallet: string): Promise<WalletRankRespons
 
   const volumeUsd = parseFloat(String(data.total_volume_usd));
 
-  // Count how many wallets have higher volume to determine rank.
-  const { count, error: rankError } = await supabase
+  const { count: exactRankCount, error: exactRankError } = await supabase
     .from('wallet_volume')
-    .select('wallet_address', { count: 'planned', head: true })
+    .select('*', { count: 'exact', head: true })
+    .gt('total_volume_usd', data.total_volume_usd);
+
+  if (!exactRankError && typeof exactRankCount === 'number') {
+    return {
+      inLeaderboard: true,
+      rank: exactRankCount + 1,
+      rankIsEstimated: false,
+      wallet_address: data.wallet_address,
+      total_volume_usd: volumeUsd,
+      total_tx: data.total_tx,
+    };
+  }
+
+  // Count how many wallets have higher volume to determine rank.
+  const { count: plannedRankCount, error: plannedRankError } = await supabase
+    .from('wallet_volume')
+    .select('*', { count: 'planned', head: true })
     .gt('total_volume_usd', data.total_volume_usd);
 
   return {
     inLeaderboard: true,
-    rank: !rankError && typeof count === 'number' ? count + 1 : undefined,
+    rank: !plannedRankError && typeof plannedRankCount === 'number' ? plannedRankCount + 1 : undefined,
+    rankIsEstimated: !plannedRankError && typeof plannedRankCount === 'number',
     wallet_address: data.wallet_address,
     total_volume_usd: volumeUsd,
     total_tx: data.total_tx,

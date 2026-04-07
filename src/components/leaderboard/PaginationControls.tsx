@@ -6,6 +6,7 @@ interface PaginationControlsProps {
   totalPages: number;
   hasNextPage: boolean;
   totalCountAvailable: boolean;
+  totalCountIsEstimated: boolean;
   onPrev: () => void;
   onNext: () => void;
   disabled: boolean;
@@ -16,6 +17,7 @@ export default function PaginationControls({
   totalPages,
   hasNextPage,
   totalCountAvailable,
+  totalCountIsEstimated,
   onPrev,
   onNext,
   disabled,
@@ -28,10 +30,11 @@ export default function PaginationControls({
       </Button>
       <span className="min-w-[120px] text-center text-sm text-zinc-400">
         Page <span className="font-medium text-zinc-200">{page}</span>
-        {totalCountAvailable ? (
+        {totalCountAvailable || totalCountIsEstimated ? (
           <>
             {' '}
-            of <span className="font-medium text-zinc-200">{totalPages}</span>
+            of{' '}
+            <span className="font-medium text-zinc-200">{totalCountIsEstimated ? `~${totalPages}` : totalPages}</span>
           </>
         ) : null}
       </span>

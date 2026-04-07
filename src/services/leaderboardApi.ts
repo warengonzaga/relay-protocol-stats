@@ -51,11 +51,13 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
   const pageRows = data ?? [];
   const hasNextPage = pageRows.length > PAGE_SIZE;
   const visibleRows = hasNextPage ? pageRows.slice(0, PAGE_SIZE) : pageRows;
-  const lowerBoundTotalWallets = hasNextPage
-    ? offset + PAGE_SIZE + 1
-    : visibleRows.length > 0
-      ? offset + visibleRows.length
-      : 0;
+  let lowerBoundTotalWallets = 0;
+
+  if (hasNextPage) {
+    lowerBoundTotalWallets = offset + PAGE_SIZE + 1;
+  } else if (visibleRows.length > 0) {
+    lowerBoundTotalWallets = offset + visibleRows.length;
+  }
 
   // When Supabase cannot return a total count, fall back to the rows we know about.
   // If another page exists this is a lower bound; otherwise it is the exact total.
@@ -78,6 +80,7 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
       .select('*', { count: 'planned', head: true });
 
     if (!plannedCountError && typeof plannedCount === 'number') {
+      // Planned counts are estimates, so keep at least the lower bound implied by the loaded page.
       totalWallets = Math.max(plannedCount, lowerBoundTotalWallets);
       totalPages = Math.max(1, Math.ceil(totalWallets / PAGE_SIZE));
       totalCountIsEstimated = true;

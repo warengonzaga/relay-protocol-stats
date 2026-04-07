@@ -44,7 +44,7 @@ export default function LeaderboardPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load leaderboard');
       setEntries([]);
-      setPage(Math.max(1, Math.floor(p)));
+      setPage(1);
       setTotalPages(1);
       setTotalWallets(0);
       setHasNextPage(false);

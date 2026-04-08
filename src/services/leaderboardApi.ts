@@ -68,7 +68,7 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
 
   const { count: exactCount, error: exactCountError } = await supabase
     .from('wallet_volume')
-    .select('*', { count: 'exact', head: true });
+    .select('wallet_address', { count: 'exact', head: true });
 
   if (!exactCountError && typeof exactCount === 'number') {
     totalWallets = exactCount;
@@ -77,7 +77,7 @@ export async function fetchLeaderboardPage(page: number): Promise<LeaderboardPag
   } else {
     const { count: plannedCount, error: plannedCountError } = await supabase
       .from('wallet_volume')
-      .select('*', { count: 'planned', head: true });
+      .select('wallet_address', { count: 'planned', head: true });
 
     if (!plannedCountError && typeof plannedCount === 'number') {
       // Planned counts are estimates, so keep at least the lower bound implied by the loaded page.
@@ -132,7 +132,7 @@ export async function fetchWalletRank(wallet: string): Promise<WalletRankRespons
 
   const { count: exactRankCount, error: exactRankError } = await supabase
     .from('wallet_volume')
-    .select('*', { count: 'exact', head: true })
+    .select('wallet_address', { count: 'exact', head: true })
     .gt('total_volume_usd', data.total_volume_usd);
 
   if (!exactRankError && typeof exactRankCount === 'number') {
@@ -149,7 +149,7 @@ export async function fetchWalletRank(wallet: string): Promise<WalletRankRespons
   // Count how many wallets have higher volume to determine rank.
   const { count: plannedRankCount, error: plannedRankError } = await supabase
     .from('wallet_volume')
-    .select('*', { count: 'planned', head: true })
+    .select('wallet_address', { count: 'planned', head: true })
     .gt('total_volume_usd', data.total_volume_usd);
 
   return {

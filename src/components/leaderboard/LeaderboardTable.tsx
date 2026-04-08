@@ -4,6 +4,7 @@ import WalletRow from './WalletRow';
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[];
   loading: boolean;
+  emptyMessage?: string;
 }
 
 function SkeletonRow() {
@@ -25,7 +26,11 @@ function SkeletonRow() {
   );
 }
 
-export default function LeaderboardTable({ entries, loading }: LeaderboardTableProps) {
+export default function LeaderboardTable({
+  entries,
+  loading,
+  emptyMessage = 'No leaderboard entries available right now.',
+}: LeaderboardTableProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-sm">
       <div className="overflow-x-auto">
@@ -43,10 +48,18 @@ export default function LeaderboardTable({ entries, loading }: LeaderboardTableP
             </tr>
           </thead>
           <tbody>
-            {loading
-              ? // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders are static and stateless
-                Array.from({ length: 10 }).map((_, i) => <SkeletonRow key={`skeleton-${i}`} />)
-              : entries.map((entry) => <WalletRow key={entry.wallet_address} entry={entry} />)}
+            {loading ? (
+              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders are static and stateless
+              Array.from({ length: 10 }).map((_, i) => <SkeletonRow key={`skeleton-${i}`} />)
+            ) : entries.length > 0 ? (
+              entries.map((entry) => <WalletRow key={entry.wallet_address} entry={entry} />)
+            ) : (
+              <tr>
+                <td colSpan={4} className="px-4 py-10 text-center text-sm text-zinc-500">
+                  {emptyMessage}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

@@ -13,6 +13,7 @@ import {
 } from '@/services/leaderboardApi';
 
 export default function LeaderboardPage() {
+  const leaderboardLoadErrorMessage = 'Leaderboard data is temporarily unavailable. Please try again.';
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -42,7 +43,8 @@ export default function LeaderboardPage() {
       setTotalCountAvailable(res.totalCountAvailable);
       setTotalCountIsEstimated(res.totalCountIsEstimated);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load leaderboard');
+      console.error('Failed to load leaderboard page', e);
+      setError(leaderboardLoadErrorMessage);
       setEntries([]);
       setPage(1);
       setTotalPages(1);
@@ -166,34 +168,36 @@ export default function LeaderboardPage() {
 
         {/* Error state */}
         {error && !loading && (
-          <div className="mb-8 rounded-2xl border border-red-500/20 bg-red-500/5 p-8 text-center">
-            <p className="text-red-400">{error}</p>
-            <button
-              type="button"
-              onClick={() => loadPage(page)}
-              className="mt-4 rounded-lg bg-zinc-800 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700"
-            >
-              Retry
-            </button>
+          <div className="mb-6 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-200">
+            <div className="flex flex-col items-center justify-between gap-3 text-center sm:flex-row sm:text-left">
+              <p>{error}</p>
+              <button
+                type="button"
+                onClick={() => loadPage(1)}
+                className="rounded-lg bg-zinc-800 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         )}
 
         {/* Table */}
-        {!error && (
-          <>
-            <LeaderboardTable entries={entries} loading={loading} />
-            <PaginationControls
-              page={page}
-              totalPages={totalPages}
-              hasNextPage={hasNextPage}
-              totalCountAvailable={totalCountAvailable}
-              totalCountIsEstimated={totalCountIsEstimated}
-              onPrev={() => loadPage(page - 1)}
-              onNext={() => loadPage(page + 1)}
-              disabled={loading}
-            />
-          </>
-        )}
+        <LeaderboardTable
+          entries={entries}
+          loading={loading}
+          emptyMessage={error ? leaderboardLoadErrorMessage : undefined}
+        />
+        <PaginationControls
+          page={page}
+          totalPages={totalPages}
+          hasNextPage={hasNextPage}
+          totalCountAvailable={totalCountAvailable}
+          totalCountIsEstimated={totalCountIsEstimated}
+          onPrev={() => loadPage(page - 1)}
+          onNext={() => loadPage(page + 1)}
+          disabled={loading || !!error}
+        />
       </div>
     </div>
   );

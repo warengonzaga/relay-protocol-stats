@@ -12,8 +12,9 @@ import {
   type WalletRankResponse,
 } from '@/services/leaderboardApi';
 
+const LEADERBOARD_LOAD_ERROR_MESSAGE = 'Leaderboard data is temporarily unavailable. Please try again.';
+
 export default function LeaderboardPage() {
-  const leaderboardLoadErrorMessage = 'Leaderboard data is temporarily unavailable. Please try again.';
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [page, setPage] = useState(1);
   const [retryPage, setRetryPage] = useState(1);
@@ -32,7 +33,7 @@ export default function LeaderboardPage() {
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const loadPage = useCallback(async (p: number) => {
-    const requestedPage = Math.max(1, Math.floor(p));
+    const requestedPage = Math.max(1, p);
     setLoading(true);
     setError(null);
     setRetryPage(requestedPage);
@@ -40,7 +41,6 @@ export default function LeaderboardPage() {
       const res = await fetchLeaderboardPage(requestedPage);
       setEntries(res.data);
       setPage(res.page);
-      setRetryPage(res.page);
       setTotalPages(res.totalPages);
       setTotalWallets(res.totalWallets);
       setHasNextPage(res.hasNextPage);
@@ -48,7 +48,7 @@ export default function LeaderboardPage() {
       setTotalCountIsEstimated(res.totalCountIsEstimated);
     } catch (e) {
       console.error('Failed to load leaderboard page', e);
-      setError(leaderboardLoadErrorMessage);
+      setError(LEADERBOARD_LOAD_ERROR_MESSAGE);
       setEntries([]);
       setPage(1);
       setTotalPages(1);
@@ -190,7 +190,7 @@ export default function LeaderboardPage() {
         <LeaderboardTable
           entries={entries}
           loading={loading}
-          emptyMessage={error ? leaderboardLoadErrorMessage : undefined}
+          emptyMessage={error ? LEADERBOARD_LOAD_ERROR_MESSAGE : undefined}
         />
         <PaginationControls
           page={page}

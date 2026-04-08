@@ -16,6 +16,7 @@ export default function LeaderboardPage() {
   const leaderboardLoadErrorMessage = 'Leaderboard data is temporarily unavailable. Please try again.';
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [page, setPage] = useState(1);
+  const [retryPage, setRetryPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalWallets, setTotalWallets] = useState(0);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -31,12 +32,15 @@ export default function LeaderboardPage() {
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const loadPage = useCallback(async (p: number) => {
+    const requestedPage = Math.max(1, Math.floor(p));
     setLoading(true);
     setError(null);
+    setRetryPage(requestedPage);
     try {
-      const res = await fetchLeaderboardPage(p);
+      const res = await fetchLeaderboardPage(requestedPage);
       setEntries(res.data);
       setPage(res.page);
+      setRetryPage(res.page);
       setTotalPages(res.totalPages);
       setTotalWallets(res.totalWallets);
       setHasNextPage(res.hasNextPage);
@@ -173,7 +177,7 @@ export default function LeaderboardPage() {
               <p>{error}</p>
               <button
                 type="button"
-                onClick={() => loadPage(1)}
+                onClick={() => loadPage(retryPage)}
                 className="rounded-lg bg-zinc-800 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700"
               >
                 Retry

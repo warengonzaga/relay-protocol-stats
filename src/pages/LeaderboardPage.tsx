@@ -13,6 +13,7 @@ import {
 } from '@/services/leaderboardApi';
 
 const LEADERBOARD_LOAD_ERROR_MESSAGE = 'Leaderboard data is temporarily unavailable. Please try again.';
+const LEADERBOARD_EMPTY_ERROR_MESSAGE = 'Leaderboard entries could not be loaded for this page.';
 
 export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -47,7 +48,7 @@ export default function LeaderboardPage() {
       setTotalCountAvailable(res.totalCountAvailable);
       setTotalCountIsEstimated(res.totalCountIsEstimated);
     } catch (e) {
-      console.error('Failed to load leaderboard page', e);
+      console.error('Failed to load leaderboard page', requestedPage, e);
       setError(LEADERBOARD_LOAD_ERROR_MESSAGE);
       setEntries([]);
       setPage(1);
@@ -190,7 +191,7 @@ export default function LeaderboardPage() {
         <LeaderboardTable
           entries={entries}
           loading={loading}
-          emptyMessage={error ? LEADERBOARD_LOAD_ERROR_MESSAGE : undefined}
+          emptyMessage={error ? LEADERBOARD_EMPTY_ERROR_MESSAGE : undefined}
         />
         <PaginationControls
           page={page}

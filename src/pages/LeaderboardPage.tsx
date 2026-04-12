@@ -12,11 +12,18 @@ import {
   type WalletRankResponse,
 } from '@/services/leaderboardApi';
 
+const LEADERBOARD_LOAD_ERROR_MESSAGE = 'Leaderboard data is temporarily unavailable. Please try again.';
+const LEADERBOARD_EMPTY_ERROR_MESSAGE = 'Leaderboard entries could not be loaded for this page.';
+
 export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [page, setPage] = useState(1);
+  const [retryPage, setRetryPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalWallets, setTotalWallets] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [totalCountAvailable, setTotalCountAvailable] = useState(false);
+  const [totalCountIsEstimated, setTotalCountIsEstimated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,17 +34,29 @@ export default function LeaderboardPage() {
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const loadPage = useCallback(async (p: number) => {
+    const requestedPage = Math.max(1, p);
     setLoading(true);
     setError(null);
+    setRetryPage(requestedPage);
     try {
-      const res = await fetchLeaderboardPage(p);
+      const res = await fetchLeaderboardPage(requestedPage);
       setEntries(res.data);
       setPage(res.page);
       setTotalPages(res.totalPages);
       setTotalWallets(res.totalWallets);
+      setHasNextPage(res.hasNextPage);
+      setTotalCountAvailable(res.totalCountAvailable);
+      setTotalCountIsEstimated(res.totalCountIsEstimated);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load leaderboard');
+      console.error('Failed to load leaderboard page', requestedPage, e);
+      setError(LEADERBOARD_LOAD_ERROR_MESSAGE);
       setEntries([]);
+      setPage(1);
+      setTotalPages(1);
+      setTotalWallets(0);
+      setHasNextPage(false);
+      setTotalCountAvailable(false);
+      setTotalCountIsEstimated(false);
     } finally {
       setLoading(false);
     }
@@ -77,7 +96,12 @@ export default function LeaderboardPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-zinc-100 md:text-4xl">Global Relay Leaderboard</h1>
             <p className="mt-1 text-sm text-zinc-500">
-              {totalWallets.toLocaleString()} wallets ranked by volume &middot; Updated every 6 hours
+              {totalCountAvailable
+                ? `${totalWallets.toLocaleString()} wallets ranked by volume`
+                : totalCountIsEstimated
+                  ? `About ${totalWallets.toLocaleString()} wallets ranked by volume`
+                  : 'Wallets ranked by volume'}
+              {' · '}Updated every 6 hours
             </p>
           </div>
           <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-sm">
@@ -108,8 +132,18 @@ export default function LeaderboardPage() {
               </div>
               {searchResult.inLeaderboard ? (
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-primary">#{searchResult.rank}</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {typeof searchResult.rank === 'number'
+                      ? `${searchResult.rankIsEstimated ? '~' : ''}#${searchResult.rank}`
+                      : '—'}
+                  </p>
                   <p className="text-sm text-zinc-400">{formatUsd(searchResult.total_volume_usd ?? 0)}</p>
+                  {typeof searchResult.rank === 'number' && searchResult.rankIsEstimated ? (
+                    <p className="text-xs text-zinc-500">Estimated rank</p>
+                  ) : null}
+                  {typeof searchResult.rank !== 'number' ? (
+                    <p className="text-xs text-zinc-500">Rank temporarily unavailable</p>
+                  ) : null}
                 </div>
               ) : (
                 <p className="text-sm text-zinc-500">Not found in leaderboard</p>
@@ -139,31 +173,36 @@ export default function LeaderboardPage() {
 
         {/* Error state */}
         {error && !loading && (
-          <div className="mb-8 rounded-2xl border border-red-500/20 bg-red-500/5 p-8 text-center">
-            <p className="text-red-400">{error}</p>
-            <button
-              type="button"
-              onClick={() => loadPage(page)}
-              className="mt-4 rounded-lg bg-zinc-800 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700"
-            >
-              Retry
-            </button>
+          <div className="mb-6 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-200">
+            <div className="flex flex-col items-center justify-between gap-3 text-center sm:flex-row sm:text-left">
+              <p>{error}</p>
+              <button
+                type="button"
+                onClick={() => loadPage(retryPage)}
+                className="rounded-lg bg-zinc-800 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         )}
 
         {/* Table */}
-        {!error && (
-          <>
-            <LeaderboardTable entries={entries} loading={loading} />
-            <PaginationControls
-              page={page}
-              totalPages={totalPages}
-              onPrev={() => loadPage(page - 1)}
-              onNext={() => loadPage(page + 1)}
-              disabled={loading}
-            />
-          </>
-        )}
+        <LeaderboardTable
+          entries={entries}
+          loading={loading}
+          emptyMessage={error ? LEADERBOARD_EMPTY_ERROR_MESSAGE : undefined}
+        />
+        <PaginationControls
+          page={page}
+          totalPages={totalPages}
+          hasNextPage={hasNextPage}
+          totalCountAvailable={totalCountAvailable}
+          totalCountIsEstimated={totalCountIsEstimated}
+          onPrev={() => loadPage(page - 1)}
+          onNext={() => loadPage(page + 1)}
+          disabled={loading || !!error}
+        />
       </div>
     </div>
   );

@@ -4,12 +4,24 @@ import { Button } from '@/components/ui/button';
 interface PaginationControlsProps {
   page: number;
   totalPages: number;
+  hasNextPage: boolean;
+  totalCountAvailable: boolean;
+  totalCountIsEstimated: boolean;
   onPrev: () => void;
   onNext: () => void;
   disabled: boolean;
 }
 
-export default function PaginationControls({ page, totalPages, onPrev, onNext, disabled }: PaginationControlsProps) {
+export default function PaginationControls({
+  page,
+  totalPages,
+  hasNextPage,
+  totalCountAvailable,
+  totalCountIsEstimated,
+  onPrev,
+  onNext,
+  disabled,
+}: PaginationControlsProps) {
   return (
     <div className="flex items-center justify-center gap-4 py-6">
       <Button variant="outline" size="sm" onClick={onPrev} disabled={page <= 1 || disabled} className="gap-1.5">
@@ -17,14 +29,20 @@ export default function PaginationControls({ page, totalPages, onPrev, onNext, d
         Previous
       </Button>
       <span className="min-w-[120px] text-center text-sm text-zinc-400">
-        Page <span className="font-medium text-zinc-200">{page}</span> of{' '}
-        <span className="font-medium text-zinc-200">{totalPages}</span>
+        Page <span className="font-medium text-zinc-200">{page}</span>
+        {totalCountAvailable || totalCountIsEstimated ? (
+          <>
+            {' '}
+            of{' '}
+            <span className="font-medium text-zinc-200">{totalCountIsEstimated ? `~${totalPages}` : totalPages}</span>
+          </>
+        ) : null}
       </span>
       <Button
         variant="outline"
         size="sm"
         onClick={onNext}
-        disabled={page >= totalPages || disabled}
+        disabled={(!hasNextPage && page >= totalPages) || disabled}
         className="gap-1.5"
       >
         Next

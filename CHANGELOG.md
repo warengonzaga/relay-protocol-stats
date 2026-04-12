@@ -8,8 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [1.4.1] - 2026-04-12
 
+### Changed
 
+- bump dependencies and enhance leaderboard fallback handling (#44)
 
 ## [1.4.0] - 2026-03-04
 

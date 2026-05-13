@@ -60,8 +60,8 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
     const trimmedAddress = address.trim();
 
     // Check if it's an ENS name (.eth), including Base names (.base.eth)
-    const isEnsOrBaseName = trimmedAddress.endsWith('.eth') || trimmedAddress.endsWith('.base.eth');
-    if (isEnsOrBaseName) {
+    const isEnsName = trimmedAddress.endsWith('.eth') || trimmedAddress.endsWith('.base.eth');
+    if (isEnsName) {
       try {
         const resolvedAddress = await resolveENSToAddress(trimmedAddress);
         if (resolvedAddress) {
@@ -77,7 +77,7 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
 
     // Validate as regular address
     if (!isValidEthereumAddress(trimmedAddress)) {
-      setError('Invalid format. Please enter a valid wallet address or ENS/Base name (.eth)');
+      setError('Invalid format. Please enter a valid wallet address or ENS/Base name (.eth or .base.eth)');
       return;
     }
 

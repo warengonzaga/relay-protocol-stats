@@ -15,7 +15,7 @@ A web dashboard for analyzing your [Relay Protocol](https://relay.link) cross-ch
 - **Wallet Analytics** — transaction count, total volume (USD), success rate, failed & refunded counts
 - **Top Chains** — favorite chain, top origin, top destination
 - **Leaderboard** — Supabase-powered ranking synced every 6 hours via GitHub Actions
-- **ENS Support** — `.eth` domain resolution powered by viem
+- **ENS Support** — `.eth` and `.base.eth` domain resolution powered by viem
 - **Shareable URLs** — direct links to any wallet's stats
 - **Pixel Avatars** — unique avatar per wallet with Blockscan integration
 

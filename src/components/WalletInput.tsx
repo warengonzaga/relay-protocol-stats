@@ -59,7 +59,7 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
 
     const trimmedAddress = address.trim();
 
-    // Check if it's an ENS name (.eth)
+    // Check if it's an ENS/Base name
     if (trimmedAddress.endsWith('.eth')) {
       try {
         const resolvedAddress = await resolveENSToAddress(trimmedAddress);
@@ -76,7 +76,7 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
 
     // Validate as regular address
     if (!isValidEthereumAddress(trimmedAddress)) {
-      setError('Invalid format. Please enter a valid wallet address or ENS name (.eth)');
+      setError('Invalid format. Please enter a valid wallet address or ENS/Base name (.eth)');
       return;
     }
 
@@ -336,7 +336,7 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
                 className="text-xs sm:text-sm font-semibold text-foreground/90 flex items-center gap-2"
               >
                 Wallet Address or ENS Name
-                <span className="text-xs font-normal text-muted-foreground">(.eth supported)</span>
+                <span className="text-xs font-normal text-muted-foreground">(.eth & .base.eth supported)</span>
               </label>
               <div className="relative">
                 <Input
@@ -344,7 +344,7 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="vitalik.eth or 0x..."
+                  placeholder="vitalik.eth / name.base.eth or 0x..."
                   disabled={isLoading}
                   className="font-mono text-xs sm:text-sm h-11 sm:h-12 bg-background/50 border-2 focus:border-primary transition-colors pr-12"
                 />

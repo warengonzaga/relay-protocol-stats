@@ -1,5 +1,5 @@
-import { createPublicClient, http } from 'viem';
-import { mainnet } from 'viem/chains';
+import { createPublicClient, http, toCoinType } from 'viem';
+import { base, mainnet } from 'viem/chains';
 import { normalize } from 'viem/ens';
 
 // Create a public client for Ethereum mainnet
@@ -22,8 +22,14 @@ export async function resolveENS(address: string): Promise<string | null> {
     const ensName = await publicClient.getEnsName({
       address: address as `0x${string}`,
     });
+    if (ensName) {
+      return ensName;
+    }
 
-    return ensName;
+    return await publicClient.getEnsName({
+      address: address as `0x${string}`,
+      coinType: toCoinType(base.id),
+    });
   } catch (error) {
     console.error('Failed to resolve ENS:', error);
     return null;
@@ -36,11 +42,18 @@ export async function resolveENS(address: string): Promise<string | null> {
  */
 export async function resolveENSToAddress(ensName: string): Promise<string | null> {
   try {
+    const normalizedName = normalize(ensName);
     const address = await publicClient.getEnsAddress({
-      name: normalize(ensName),
+      name: normalizedName,
     });
+    if (address) {
+      return address;
+    }
 
-    return address;
+    return await publicClient.getEnsAddress({
+      name: normalizedName,
+      coinType: toCoinType(base.id),
+    });
   } catch (error) {
     console.error('Failed to resolve ENS to address:', error);
     return null;

@@ -59,9 +59,8 @@ export default function WalletInput({ onAnalyze, onReset, isLoading, analyzedAdd
 
     const trimmedAddress = address.trim();
 
-    // Check if it's an ENS name (.eth), including Base names (.base.eth)
-    const isEnsName = trimmedAddress.endsWith('.eth') || trimmedAddress.endsWith('.base.eth');
-    if (isEnsName) {
+    // Check if it's an ENS name (.eth), including Base names like .base.eth
+    if (trimmedAddress.endsWith('.eth')) {
       try {
         const resolvedAddress = await resolveENSToAddress(trimmedAddress);
         if (resolvedAddress) {

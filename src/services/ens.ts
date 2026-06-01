@@ -50,6 +50,14 @@ export async function resolveENSToAddress(ensName: string): Promise<string | nul
       return address;
     }
 
+    // Only fall back to the Base coin type record for Base names
+    // (e.g. `name.base.eth`). For generic `.eth` names, the ETH (coinType 60)
+    // record and the Base record can resolve to different addresses, so we
+    // avoid silently returning a different chain's address.
+    if (!normalizedName.endsWith('.base.eth')) {
+      return null;
+    }
+
     return await publicClient.getEnsAddress({
       name: normalizedName,
       coinType: toCoinType(base.id),

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [1.5.3] - 2026-10-12
+
+### Changed
+
+- mark site as discontinued
+- return from leaderboard to preserved app
+
 ## [1.5.2] - 2026-10-12
 
 ### Changed

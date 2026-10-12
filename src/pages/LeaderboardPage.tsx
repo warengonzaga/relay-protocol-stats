@@ -87,7 +87,7 @@ export default function LeaderboardPage() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
         {/* Back link */}
-        <Link to="/" className="mb-6 inline-block text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+        <Link to="/stats" className="mb-6 inline-block text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
           ← Back to stats
         </Link>
 

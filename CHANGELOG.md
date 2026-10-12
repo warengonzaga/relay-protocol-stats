@@ -7,8 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [1.5.0] - 2026-10-12
+
+### Added
+
+- add project retirement landing page
+- add reusable project notice banner
+
 ### Changed
 
+- update CHANGELOG.md for v1.4.1
 - add project retirement notice
 - update CHANGELOG.md for v1.4.1
 - update lucide-react, @vitejs/plugin-react, and vite lockfile entries

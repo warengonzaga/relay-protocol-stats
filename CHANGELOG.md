@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [1.5.2] - 2026-10-12
+
+### Changed
+
+- route homepage to retirement notice
+
 ## [1.5.1] - 2026-10-12
 
 ### Changed

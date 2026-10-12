@@ -2,7 +2,6 @@ import { Bug, GitPullRequest, Heart, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Footer() {
-  const version = __APP_VERSION__;
   const repoUrl = 'https://github.com/warengonzaga/relay-protocol-stats';
 
   return (
@@ -56,7 +55,6 @@ export default function Footer() {
               Relay Protocol. Built for informational purposes only.
             </p>
 
-            {/* Creator and Version */}
             <div className="flex items-center justify-center gap-1">
               <span>Built by</span>
               <a
@@ -66,15 +64,6 @@ export default function Footer() {
                 className="font-medium text-primary hover:underline"
               >
                 Waren Gonzaga
-              </a>
-              <span className="text-muted-foreground/50">•</span>
-              <a
-                href={`${repoUrl}/releases`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground/70 hover:text-foreground hover:underline transition-colors"
-              >
-                v{version}
               </a>
             </div>
 

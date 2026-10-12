@@ -1,143 +1,71 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import FAQ from '@/components/FAQ';
 import Footer from '@/components/Footer';
-import LoadingSpinner from '@/components/LoadingSpinner';
 import RelayLogo from '@/components/RelayLogo';
 import StatsDisplay from '@/components/StatsDisplay';
-import WalletInput from '@/components/WalletInput';
-import { resolveENS } from '@/services/ens';
-import { analyzeWalletStats, isValidEthereumAddress } from '@/services/relayApi';
 import type { WalletStats } from '@/types/relay';
 
-function App() {
-  const [stats, setStats] = useState<WalletStats | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [analyzedAddress, setAnalyzedAddress] = useState<string | null>(null);
-  const [ensName, setEnsName] = useState<string | null>(null);
-  const [loadingAddress, setLoadingAddress] = useState<string>('');
-  const currentRequestIdRef = useRef(0);
+const DEMO_STATS: WalletStats = {
+  transactionCount: 248,
+  totalVolumeUsd: 18432.76,
+  dailyVolumeByRange: {
+    '7D': [
+      { date: '2026-10-06', volumeUsd: 420 },
+      { date: '2026-10-07', volumeUsd: 810 },
+      { date: '2026-10-08', volumeUsd: 625 },
+      { date: '2026-10-09', volumeUsd: 1140 },
+      { date: '2026-10-10', volumeUsd: 730 },
+      { date: '2026-10-11', volumeUsd: 980 },
+      { date: '2026-10-12', volumeUsd: 560 },
+    ],
+    '30D': [],
+    '1Y': [],
+  },
+  volumeByChain: [
+    { chainId: 1, chainName: 'Ethereum', volumeUsd: 8200 },
+    { chainId: 8453, chainName: 'Base', volumeUsd: 6150 },
+    { chainId: 42161, chainName: 'Arbitrum', volumeUsd: 4082.76 },
+  ],
+  topChains: [{ chainId: 1, chainName: 'Ethereum', count: 180 }],
+  topOriginChains: [{ chainId: 1, chainName: 'Ethereum', count: 112 }],
+  topDestinationChains: [{ chainId: 8453, chainName: 'Base', count: 96 }],
+  topTokens: [
+    {
+      tokenAddress: '0x0000000000000000000000000000000000000000',
+      tokenSymbol: 'ETH',
+      chainId: 1,
+      chainName: 'Ethereum',
+      count: 94,
+    },
+  ],
+  topOriginTokens: [],
+  topDestinationTokens: [],
+  successRate: 97.6,
+  totalRequests: 254,
+  failedRequests: 6,
+  refundedRequests: 0,
+};
 
-  const handleAnalyze = useCallback(async (address: string) => {
-    setIsLoading(true);
-    setLoadingAddress(address);
-    setError(null);
-    setStats(null);
-    setEnsName(null);
-
-    try {
-      // Resolve ENS name in parallel with wallet stats
-      const [walletStats, resolvedEns] = await Promise.all([analyzeWalletStats(address), resolveENS(address)]);
-
-      setStats(walletStats);
-      setAnalyzedAddress(address);
-      setEnsName(resolvedEns);
-
-      // Update URL with wallet parameter
-      const url = new URL(window.location.href);
-      url.searchParams.set('wallet', address);
-      window.history.pushState({}, '', url.toString());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-      setAnalyzedAddress(null);
-      setEnsName(null);
-    } finally {
-      setIsLoading(false);
-      setLoadingAddress('');
-    }
-  }, []);
-
-  // Read wallet address from URL parameter on mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const walletParam = urlParams.get('wallet');
-
-    if (walletParam && isValidEthereumAddress(walletParam)) {
-      handleAnalyze(walletParam);
-    }
-  }, [handleAnalyze]);
-
-  const handleReset = () => {
-    setStats(null);
-    setError(null);
-    setAnalyzedAddress(null);
-    setEnsName(null);
-    setLoadingAddress('');
-
-    // Clear wallet parameter from URL
-    const url = new URL(window.location.href);
-    url.searchParams.delete('wallet');
-    window.history.pushState({}, '', url.toString());
-  };
-
-  const handleRefresh = async () => {
-    if (!analyzedAddress || isRefreshing) {
-      return;
-    }
-
-    setIsRefreshing(true);
-    setError(null);
-
-    // Increment request ID and capture it for this request
-    currentRequestIdRef.current += 1;
-    const requestId = currentRequestIdRef.current;
-
-    try {
-      const walletStats = await analyzeWalletStats(analyzedAddress);
-
-      // Only update if this is still the latest request
-      if (requestId === currentRequestIdRef.current) {
-        setStats(walletStats);
-      }
-    } catch (err) {
-      // Only update error if this is still the latest request
-      if (requestId === currentRequestIdRef.current) {
-        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-      }
-    } finally {
-      // Only clear refreshing state if this is still the latest request
-      if (requestId === currentRequestIdRef.current) {
-        setIsRefreshing(false);
-      }
-    }
-  };
-
+export default function App() {
   return (
-    <div className="min-h-screen bg-background py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8 flex flex-col">
-      <div className="max-w-3xl mx-auto flex-1 w-full">
-        <header className="text-center mb-8 sm:mb-10 md:mb-12 space-y-3 sm:space-y-4">
-          <div className="flex items-center justify-center gap-2 sm:gap-3">
+    <div className="min-h-screen bg-background px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12 flex flex-col">
+      <main className="mx-auto w-full max-w-3xl flex-1">
+        <header className="mb-8 space-y-3 text-center sm:mb-10">
+          <div className="flex justify-center">
             <RelayLogo className="h-10 sm:h-12 md:h-14" />
           </div>
-          <p className="text-muted-foreground text-sm sm:text-base px-4">
-            Analyze your cross-chain transaction history
-          </p>
+          <p className="text-sm text-muted-foreground sm:text-base">Sample wallet analytics</p>
           <Link to="/leaderboard" className="inline-block text-sm font-medium text-primary hover:underline">
-            Global Leaderboard →
+            Sample Global Leaderboard →
           </Link>
         </header>
 
-        <WalletInput
-          onAnalyze={handleAnalyze}
-          onReset={handleReset}
-          isLoading={isLoading}
-          analyzedAddress={analyzedAddress}
-          ensName={ensName}
-        />
+        <aside className="mb-6 rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-300">
+          Demo data only. This preserved dashboard no longer fetches wallet, Relay API, ENS, or live leaderboard data.
+        </aside>
 
-        {isLoading && <LoadingSpinner address={loadingAddress} />}
-
-        {!isLoading && (
-          <StatsDisplay stats={stats} error={error} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-        )}
-      </div>
-
-      {!isLoading && !analyzedAddress && <FAQ />}
+        <StatsDisplay stats={DEMO_STATS} error={null} />
+      </main>
       <Footer />
     </div>
   );
 }
-
-export default App;

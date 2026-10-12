@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [1.5.6] - 2026-10-12
+
+### Changed
+
+- support direct SPA routes
+
+### Removed
+
+- stop loading retired analytics script
+
 ## [1.5.5] - 2026-10-12
 
 ### Changed
